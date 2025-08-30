@@ -1,0 +1,157 @@
+steps:
+  # Install Node.js dependencies
+  - name: 'node:18-alpine'
+    entrypoint: 'npm'
+    args: ['ci']
+    dir: 'services/chat-widget'
+    id: 'install-deps'
+
+  # Run linting
+  - name: 'node:18-alpine'
+    entrypoint: 'npm'
+    args: ['run', 'lint']
+    dir: 'services/chat-widget'
+    id: 'lint'
+    waitFor: ['install-deps']
+
+  # Run tests
+  - name: 'node:18-alpine'
+    entrypoint: 'npm'
+    args: ['test']
+    dir: 'services/chat-widget'
+    env:
+      - 'CI=true'
+    id: 'run-tests'
+    waitFor: ['install-deps']
+
+  # Build the widget
+  - name: 'node:18-alpine'
+    entrypoint: 'npm'
+    args: ['run', 'build']
+    dir: 'services/chat-widget'
+    id: 'build-widget'
+    waitFor: ['lint', 'run-tests']
+
+  # Check bundle size
+  - name: 'node:18-alpine'
+    entrypoint: 'npm'
+    args: ['run', 'size-check']
+    dir: 'services/chat-widget'
+    id: 'size-check'
+    waitFor: ['build-widget']
+
+  # Build Docker image for serving
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/chat-widget:${BUILD_ID}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/chat-widget:latest'
+      - './services/chat-widget'
+    id: 'build-image'
+    waitFor: ['size-check']
+
+  # Push Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/chat-widget'
+    id: 'push-image'
+    waitFor: ['build-image']
+
+  # Upload widget files to Cloud Storage
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args:
+      - '-m'
+      - 'rsync'
+      - '-r'
+      - '-d'
+      - './services/chat-widget/dist/'
+      - 'gs://${_ASSETS_BUCKET}/widget/'
+    id: 'upload-assets'
+    waitFor: ['build-widget']
+
+  # Set public read permissions on widget files
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args:
+      - '-m'
+      - 'acl'
+      - 'ch'
+      - '-r'
+      - '-u'
+      - 'AllUsers:R'
+      - 'gs://${_ASSETS_BUCKET}/widget/'
+    id: 'set-permissions'
+    waitFor: ['upload-assets']
+
+  # Create widget demo page
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        cat > demo.html << 'EOF'
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>ANZx.ai Chat Widget Demo</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+        </head>
+        <body>
+            <h1>ANZx.ai Chat Widget Demo</h1>
+            <p>The chat widget should appear in the bottom-right corner.</p>
+            
+            <script>
+                window.ANZxChatConfig = {
+                    apiUrl: 'wss://api.anzx.ai',
+                    theme: 'light',
+                    organizationId: 'demo'
+                };
+            </script>
+            <script src="https://storage.googleapis.com/${_ASSETS_BUCKET}/widget/widget.js"></script>
+        </body>
+        </html>
+        EOF
+        gsutil cp demo.html gs://${_ASSETS_BUCKET}/demo.html
+        gsutil acl ch -u AllUsers:R gs://${_ASSETS_BUCKET}/demo.html
+    id: 'create-demo'
+    waitFor: ['set-permissions']
+
+  # Security scan of Docker image
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'container'
+      - 'images'
+      - 'scan'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/chat-widget:${BUILD_ID}'
+      - '--format=json'
+    id: 'security-scan'
+    waitFor: ['push-image']
+
+# Store build artifacts
+artifacts:
+  objects:
+    location: 'gs://${_PROJECT_ID}-${_ENVIRONMENT}-build-artifacts'
+    paths:
+      - 'services/chat-widget/dist/**/*'
+      - 'services/chat-widget/coverage/**/*'
+
+# Build options
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_STANDARD_4'
+  substitutionOption: 'ALLOW_LOOSE'
+
+# Timeout for the entire build
+timeout: '900s'
+
+# Substitutions (provided by trigger)
+substitutions:
+  _ENVIRONMENT: 'dev'
+  _REGION: 'australia-southeast1'
+  _PROJECT_ID: 'your-project-id'
+  _REPO_NAME: 'anzx-repo'
+  _ASSETS_BUCKET: 'your-project-id-dev-assets'
