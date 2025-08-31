@@ -1,19 +1,19 @@
 const path = require('path');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
-  
+  const analyze = env && env.analyze;
+
   return {
-    entry: './src/index.js',
+    entry: './src/widget.js',
     output: {
       path: path.resolve(__dirname, 'dist'),
-      filename: 'anzx-widget.js',
-      library: 'ANZxWidget',
+      filename: 'chat-widget.js',
+      library: 'ANZxChatWidget',
       libraryTarget: 'umd',
-      globalObject: 'this',
-      clean: true
+      globalObject: 'this'
     },
     module: {
       rules: [
@@ -26,7 +26,7 @@ module.exports = (env, argv) => {
               presets: [
                 ['@babel/preset-env', {
                   targets: {
-                    browsers: ['> 1%', 'last 2 versions', 'not dead']
+                    browsers: ['> 1%', 'last 2 versions', 'ie >= 11']
                   },
                   modules: false
                 }]
@@ -36,44 +36,42 @@ module.exports = (env, argv) => {
         },
         {
           test: /\.css$/,
-          use: [
-            isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
-            'css-loader'
-          ]
+          use: ['style-loader', 'css-loader']
         }
       ]
     },
-    plugins: [
-      ...(isProduction ? [
-        new MiniCssExtractPlugin({
-          filename: 'anzx-widget.css'
-        })
-      ] : [])
-    ],
     optimization: {
       minimize: isProduction,
       minimizer: [
         new TerserPlugin({
           terserOptions: {
             compress: {
-              drop_console: true,
-              drop_debugger: true
+              drop_console: isProduction,
+              drop_debugger: isProduction,
+              pure_funcs: isProduction ? ['console.log', 'console.info'] : []
             },
-            mangle: true
-          }
+            mangle: {
+              reserved: ['ANZxChatWidget']
+            },
+            format: {
+              comments: false
+            }
+          },
+          extractComments: false
         })
       ]
     },
-    devServer: {
-      static: {
-        directory: path.join(__dirname, 'demo')
-      },
-      port: 3001,
-      hot: true,
-      open: true
-    },
+    plugins: [
+      ...(analyze ? [new BundleAnalyzerPlugin()] : [])
+    ],
     resolve: {
-      extensions: ['.js', '.css']
-    }
+      extensions: ['.js', '.json']
+    },
+    performance: {
+      maxAssetSize: 12288, // 12KB limit
+      maxEntrypointSize: 12288,
+      hints: 'error'
+    },
+    devtool: isProduction ? false : 'source-map'
   };
 };

@@ -92,7 +92,7 @@
 
 ## 5. Multi-Channel Chat Interface
 
-- [-] 5.1 Develop embeddable chat widget
+- [x] 5.1 Develop embeddable chat widget
   - Create vanilla JavaScript widget with 12KB bundle size limit
   - Implement real-time WebSocket communication with fallback to polling
   - Build customizable UI with theme support and accessibility compliance

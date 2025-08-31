@@ -15,7 +15,7 @@ from app.middleware.security import (
     ComplianceLoggingMiddleware,
     PrivacyComplianceMiddleware
 )
-from app.routers import compliance, auth, organizations, billing, agents, knowledge
+from app.routers import compliance, auth, organizations, billing, agents, knowledge, chat_widget, websocket
 
 app = FastAPI(
     title="ANZx.ai Core API",
@@ -46,6 +46,8 @@ app.include_router(organizations.router)
 app.include_router(billing.router)
 app.include_router(agents.router)
 app.include_router(knowledge.router)
+app.include_router(chat_widget.router)
+app.include_router(websocket.router)
 app.include_router(compliance.router)
 
 @app.get("/")
