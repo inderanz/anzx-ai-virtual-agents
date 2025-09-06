@@ -44,6 +44,7 @@ class Organization(Base):
     # Settings and configuration
     settings = Column(JSON, default=dict)
     branding = Column(JSON, default=dict)  # Logo, colors, etc.
+    email_settings = Column(JSON, default=dict)  # Email integration settings
     
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -418,4 +419,226 @@ class AuditLog(Base):
         Index('idx_audit_logs_created_at', 'created_at'),
         Index('idx_audit_logs_risk_level', 'risk_level'),
         Index('idx_audit_logs_outcome', 'outcome'),
+    )
+
+cl
+ass ChatWidget(Base):
+    """Chat widget configuration for embeddable widgets"""
+    __tablename__ = "chat_widgets"
+    
+    id = Column(String(32), primary_key=True)  # URL-safe token
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
+    name = Column(String(255), nullable=False)
+    assistant_id = Column(UUID(as_uuid=True), ForeignKey("assistants.id"))
+    api_key = Column(String(64), nullable=False, unique=True)
+    allowed_domains = Column(JSON, default=list)  # List of allowed domains
+    widget_settings = Column(JSON, default=dict)  # Theme, colors, etc.
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime)
+    
+    # Relationships
+    organization = relationship("Organization")
+    assistant = relationship("Assistant")
+    conversations = relationship("Conversation", back_populates="widget")
+    
+    # Indexes
+    __table_args__ = (
+        Index('idx_chat_widgets_organization', 'organization_id'),
+        Index('idx_chat_widgets_assistant', 'assistant_id'),
+        Index('idx_chat_widgets_active', 'is_active'),
+        Index('idx_chat_widgets_api_key', 'api_key'),
+    )
+
+
+class EmailThread(Base):
+    """Email thread management for support email integration"""
+    __tablename__ = "email_threads"
+    
+    id = Column(String(32), primary_key=True)  # Generated thread ID
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
+    conversation_id = Column(UUID(as_uuid=True), ForeignKey("conversations.id"))
+    subject = Column(String(500), nullable=False)
+    customer_email = Column(String(255), nullable=False)
+    customer_name = Column(String(255))
+    status = Column(String(50), default="new")  # new, active, responded, escalated, closed
+    priority = Column(String(20), default="normal")  # low, normal, high, urgent
+    message_references = Column(Text)  # Email message IDs for threading
+    last_message_id = Column(String(255))
+    last_message_at = Column(DateTime)
+    last_response_at = Column(DateTime)
+    response_count = Column(Integer, default=0)
+    escalated_at = Column(DateTime)
+    escalation_reason = Column(Text)
+    metadata = Column(JSON, default=dict)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    organization = relationship("Organization")
+    conversation = relationship("Conversation")
+    
+    # Indexes
+    __table_args__ = (
+        Index('idx_email_threads_organization', 'organization_id'),
+        Index('idx_email_threads_conversation', 'conversation_id'),
+        Index('idx_email_threads_customer_email', 'customer_email'),
+        Index('idx_email_threads_status', 'status'),
+        Index('idx_email_threads_priority', 'priority'),
+        Index('idx_email_threads_created_at', 'created_at'),
+        Index('idx_email_threads_last_message_at', 'last_message_at'),
+    )
+cl
+ass MCPServer(Base):
+    """MCP Server configuration and status"""
+    __tablename__ = "mcp_servers"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
+    name = Column(String(255), nullable=False)
+    description = Column(Text)
+    config = Column(JSON, nullable=False)  # Server configuration
+    status = Column(String(50), default="registered")  # registered, running, stopped, error
+    is_active = Column(Boolean, default=True)
+    
+    # Runtime information
+    pid = Column(Integer)
+    started_at = Column(DateTime)
+    last_health_check = Column(DateTime)
+    restart_count = Column(Integer, default=0)
+    error_message = Column(Text)
+    
+    # Capabilities
+    capabilities = Column(JSON, default=list)  # List of capabilities
+    tools_count = Column(Integer, default=0)
+    resources_count = Column(Integer, default=0)
+    
+    # Metadata
+    metadata = Column(JSON, default=dict)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    organization = relationship("Organization")
+    tools = relationship("MCPTool", back_populates="server", cascade="all, delete-orphan")
+    
+    # Indexes
+    __table_args__ = (
+        Index('idx_mcp_servers_organization', 'organization_id'),
+        Index('idx_mcp_servers_name', 'name'),
+        Index('idx_mcp_servers_status', 'status'),
+        Index('idx_mcp_servers_active', 'is_active'),
+        UniqueConstraint('organization_id', 'name', name='uq_mcp_servers_org_name'),
+    )
+
+
+class MCPTool(Base):
+    """MCP Tool definition and metadata"""
+    __tablename__ = "mcp_tools"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    server_id = Column(UUID(as_uuid=True), ForeignKey("mcp_servers.id"), nullable=False)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
+    
+    # Tool definition
+    name = Column(String(255), nullable=False)
+    description = Column(Text)
+    category = Column(String(100))  # communication, finance, storage, etc.
+    
+    # Tool schema
+    input_schema = Column(JSON, nullable=False)  # JSON schema for input parameters
+    output_schema = Column(JSON)  # JSON schema for output (optional)
+    
+    # Configuration
+    is_enabled = Column(Boolean, default=True)
+    requires_approval = Column(Boolean, default=False)
+    timeout_seconds = Column(Integer, default=30)
+    rate_limit_per_minute = Column(Integer, default=60)
+    
+    # Usage tracking
+    usage_count = Column(Integer, default=0)
+    last_used_at = Column(DateTime)
+    average_execution_time_ms = Column(Integer, default=0)
+    success_rate = Column(Float, default=1.0)
+    
+    # Security
+    security_policy = Column(JSON, default=dict)
+    allowed_roles = Column(JSON, default=list)  # List of roles that can use this tool
+    
+    # Metadata
+    metadata = Column(JSON, default=dict)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    server = relationship("MCPServer", back_populates="tools")
+    organization = relationship("Organization")
+    executions = relationship("MCPToolExecution", back_populates="tool", cascade="all, delete-orphan")
+    
+    # Indexes
+    __table_args__ = (
+        Index('idx_mcp_tools_server', 'server_id'),
+        Index('idx_mcp_tools_organization', 'organization_id'),
+        Index('idx_mcp_tools_name', 'name'),
+        Index('idx_mcp_tools_category', 'category'),
+        Index('idx_mcp_tools_enabled', 'is_enabled'),
+        UniqueConstraint('server_id', 'name', name='uq_mcp_tools_server_name'),
+    )
+
+
+class MCPToolExecution(Base):
+    """MCP Tool execution log and results"""
+    __tablename__ = "mcp_tool_executions"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tool_id = Column(UUID(as_uuid=True), ForeignKey("mcp_tools.id"), nullable=False)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    conversation_id = Column(UUID(as_uuid=True), ForeignKey("conversations.id"))
+    
+    # Execution details
+    input_parameters = Column(JSON, nullable=False)
+    output_result = Column(JSON)
+    status = Column(String(50), nullable=False)  # pending, running, completed, failed, timeout
+    
+    # Timing
+    started_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime)
+    execution_time_ms = Column(Integer)
+    
+    # Error handling
+    error_message = Column(Text)
+    error_code = Column(String(100))
+    retry_count = Column(Integer, default=0)
+    
+    # Security and approval
+    requires_approval = Column(Boolean, default=False)
+    approved_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    approved_at = Column(DateTime)
+    approval_reason = Column(Text)
+    
+    # Resource usage
+    memory_usage_mb = Column(Integer)
+    cpu_usage_percent = Column(Float)
+    network_requests = Column(Integer, default=0)
+    
+    # Metadata
+    metadata = Column(JSON, default=dict)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    tool = relationship("MCPTool", back_populates="executions")
+    organization = relationship("Organization")
+    user = relationship("User", foreign_keys=[user_id])
+    approver = relationship("User", foreign_keys=[approved_by])
+    conversation = relationship("Conversation")
+    
+    # Indexes
+    __table_args__ = (
+        Index('idx_mcp_executions_tool', 'tool_id'),
+        Index('idx_mcp_executions_organization', 'organization_id'),
+        Index('idx_mcp_executions_user', 'user_id'),
+        Index('idx_mcp_executions_conversation', 'conversation_id'),
+        Index('idx_mcp_executions_status', 'status'),
+        Index('idx_mcp_executions_started_at', 'started_at'),
     )
