@@ -1,0 +1,15 @@
+steps:
+# Install dependencies
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['install']
+
+# Build the React application
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['run', 'build']
+
+# Deploy to Firebase Hosting
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['install', '-g', 'firebase-tools']
+- name: 'gcr.io/cloud-builders/npm'
+  entrypoint: 'firebase'
+  args: ['deploy', '--only', 'hosting', '--project', '${PROJECT_ID}', '--non-interactive', '--token', '${_FIREBASE_TOKEN}']
