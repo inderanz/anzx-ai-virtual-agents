@@ -26,19 +26,25 @@ class VertexAIAgentService:
     def __init__(self):
         self.config = vertex_ai_config
         self.auth_service = gcp_auth_service
-        self.project_id = self.auth_service.get_project_id()
+        self.project_id = None  # Will be lazy loaded
         self.location = self.config.LOCATION
         self.agent_builder_location = self.config.AGENT_BUILDER_LOCATION
         
-        # Initialize clients
+        # Initialize clients as None - will be lazy loaded
         self._discovery_client = None
         self._conversation_client = None
-        
-        self._initialize_clients()
+        self._initialized = False
     
-    def _initialize_clients(self):
-        """Initialize Google Cloud clients with Workload Identity"""
+    def _ensure_initialized(self):
+        """Ensure clients are initialized (lazy initialization)"""
+        if self._initialized:
+            return
+            
         try:
+            # Get project ID if not set
+            if not self.project_id:
+                self.project_id = self.auth_service.get_project_id()
+            
             # Get authenticated credentials from auth service
             credentials = self.auth_service.get_credentials()
             
@@ -59,22 +65,79 @@ class VertexAIAgentService:
                 credentials=credentials
             )
             
+            self._initialized = True
             logger.info(
                 f"Vertex AI clients initialized with {self.auth_service._runtime_environment} authentication. "
                 f"Project: {self.project_id}, Location: {self.location}"
             )
             
         except (DefaultCredentialsError, RefreshError) as e:
-            logger.error(f"Authentication failed for Vertex AI: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Vertex AI authentication failed"
-            )
+            logger.warning(f"Authentication failed for Vertex AI, service will be unavailable: {e}")
+            self._initialized = False
+            # Don't raise exception - allow service to start in degraded mode
         except Exception as e:
-            logger.error(f"Failed to initialize Vertex AI clients: {e}")
+            logger.warning(f"Failed to initialize Vertex AI clients, service will be unavailable: {e}")
+            self._initialized = False
+            # Don't raise exception - allow service to start in degraded mode
+    
+    async def generate_response(
+        self,
+        messages: List[Dict[str, str]],
+        model: str = "gemini-1.5-pro",
+        temperature: float = 0.7,
+        max_tokens: int = 1000,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Generate a response using Vertex AI"""
+        try:
+            self._ensure_initialized()
+            
+            if not self._initialized:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Vertex AI service is not available"
+                )
+            
+            # Extract the user message
+            user_message = ""
+            system_message = ""
+            
+            for msg in messages:
+                if msg.get("role") == "user":
+                    user_message = msg.get("content", "")
+                elif msg.get("role") == "system":
+                    system_message = msg.get("content", "")
+            
+            # Use Vertex AI Gemini model for generation
+            model_instance = aiplatform.GenerativeModel(model)
+            
+            # Combine system and user messages
+            prompt = f"{system_message}\n\nUser: {user_message}" if system_message else user_message
+            
+            response = model_instance.generate_content(
+                prompt,
+                generation_config={
+                    "temperature": temperature,
+                    "max_output_tokens": max_tokens,
+                }
+            )
+            
+            return {
+                "content": response.text,
+                "metadata": {
+                    "model": model,
+                    "temperature": temperature,
+                    "max_tokens": max_tokens,
+                    "tokens_input": len(prompt.split()),
+                    "tokens_output": len(response.text.split()) if response.text else 0,
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to generate response: {e}")
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Vertex AI service unavailable"
+                detail=f"Failed to generate response: {str(e)}"
             )
     
     async def create_agent(
@@ -98,6 +161,7 @@ class VertexAIAgentService:
         Returns:
             Agent configuration
         """
+        self._ensure_initialized()
         try:
             # Get agent template
             template = self.config.get_agent_template(agent_type)
@@ -402,6 +466,7 @@ class VertexAIAgentService:
     async def test_agent_connection(self) -> Dict[str, Any]:
         """Test connection to Vertex AI services"""
         try:
+            self._ensure_initialized()
             # Test basic connectivity
             config_validation = self.config.validate_config()
             

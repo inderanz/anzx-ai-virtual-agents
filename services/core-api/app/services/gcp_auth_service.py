@@ -31,8 +31,16 @@ class GCPAuthService:
         self._credentials: Optional[Credentials] = None
         self._project_id: Optional[str] = None
         self._runtime_environment = self.config.RUNTIME_ENVIRONMENT
+        self._initialized = False
         
+        # Don't initialize credentials immediately - use lazy initialization
+    
+    def _ensure_initialized(self):
+        """Ensure credentials are initialized (lazy initialization)"""
+        if self._initialized:
+            return
         self._initialize_credentials()
+        self._initialized = True
     
     def _initialize_credentials(self):
         """Initialize credentials based on runtime environment"""
@@ -212,6 +220,8 @@ class GCPAuthService:
     
     def get_credentials(self) -> Credentials:
         """Get authenticated credentials"""
+        self._ensure_initialized()
+        
         if not self._credentials:
             raise ValueError("Credentials not initialized")
         
@@ -229,6 +239,7 @@ class GCPAuthService:
     
     def get_project_id(self) -> str:
         """Get the current project ID"""
+        self._ensure_initialized()
         return self._project_id or self.config.PROJECT_ID
     
     def get_access_token(self) -> str:

@@ -10,7 +10,6 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from ..models.user import Assistant, Organization, User
-from ..services.vertex_ai_service import vertex_ai_service
 from ..services.mcp_tool_registry import mcp_tool_registry
 from ..config.assistant_config import ASSISTANT_TEMPLATES, ASSISTANT_CAPABILITIES
 

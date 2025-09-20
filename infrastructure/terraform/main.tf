@@ -154,6 +154,44 @@ resource "google_redis_instance" "cache" {
   depends_on = [google_project_service.required_apis]
 }
 
+# Service Account for Cloud Run services
+resource "google_service_account" "cloud_run_sa" {
+  account_id   = "anzx-ai-platform-run-sa"
+  display_name = "ANZX AI Platform Cloud Run Service Account"
+  description  = "Service account for ANZX AI Platform Cloud Run services"
+}
+
+# IAM bindings for the service account
+resource "google_project_iam_member" "cloud_run_sa_aiplatform" {
+  project = var.project_id
+  role    = "roles/aiplatform.user"
+  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+}
+
+resource "google_project_iam_member" "cloud_run_sa_discoveryengine" {
+  project = var.project_id
+  role    = "roles/discoveryengine.editor"
+  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+}
+
+resource "google_project_iam_member" "cloud_run_sa_secretmanager" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+}
+
+resource "google_project_iam_member" "cloud_run_sa_storage" {
+  project = var.project_id
+  role    = "roles/storage.objectAdmin"
+  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+}
+
+resource "google_project_iam_member" "cloud_run_sa_cloudsql" {
+  project = var.project_id
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+}
+
 # Cloud Run service for Core API
 resource "google_cloud_run_service" "core_api" {
   name     = "anzx-ai-platform-core-api"  # Fixed: simplified name
@@ -171,8 +209,9 @@ resource "google_cloud_run_service" "core_api" {
     }
     
     spec {
+      service_account_name = google_service_account.cloud_run_sa.email
       containers {
-        image = "${var.region}-docker.pkg.dev/${var.project_id}/${data.google_artifact_registry_repository.docker_repo.repository_id}/core-api:latest"
+        image = "${var.region}-docker.pkg.dev/${var.project_id}/${data.google_artifact_registry_repository.docker_repo.repository_id}/core-api:v1.0.4"
         
         ports {
           container_port = 8000
@@ -253,6 +292,7 @@ resource "google_cloud_run_service" "knowledge_service" {
     }
     
     spec {
+      service_account_name = google_service_account.cloud_run_sa.email
       containers {
         image = "${var.region}-docker.pkg.dev/${var.project_id}/${data.google_artifact_registry_repository.docker_repo.repository_id}/knowledge-service:latest"
         
