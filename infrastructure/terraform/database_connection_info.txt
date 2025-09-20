@@ -1,0 +1,19 @@
+# ANZX AI Platform Database Connection Information
+# Generated: Sat Sep 20 17:31:20 AEST 2025
+# KEEP THIS FILE SECURE!
+
+Database Instance: anzx-ai-platform-db
+Database Name: anzx_ai_platform
+Database User: anzx_user
+Database Password: szsQFdVWtTIU4aL3jq8DR8tg6
+Database Host: 34.40.163.17
+Database Port: 5432
+
+Connection String: postgresql://anzx_user:szsQFdVWtTIU4aL3jq8DR8tg6@34.40.163.17:5432/anzx_ai_platform?sslmode=require
+
+Cloud Run Services Updated:
+- anzx-ai-platform-core-api
+- anzx-ai-platform-knowledge-service
+
+Terraform Files Updated:
+- terraform.tfvars (password updated)

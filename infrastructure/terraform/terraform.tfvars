@@ -12,7 +12,7 @@ alert_email  = "admin@anzx.ai"
 # Database configuration (Free tier optimized)
 db_name     = "anzx_ai_platform"
 db_user     = "anzx_user"
-db_password = "AnzxAI2024!SecureDB"
+db_password = "szsQFdVWtTIU4aL3jq8DR8tg6"
 db_tier     = "db-f1-micro"  # Free tier: 0.6GB RAM, shared CPU
 
 # Redis configuration (Free tier optimized)
