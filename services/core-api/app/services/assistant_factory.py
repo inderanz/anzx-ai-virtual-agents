@@ -25,6 +25,7 @@ class BaseAssistant(ABC):
     """
     
     def __init__(self, assistant_id: str, config: Dict[str, Any]):
+        logger.info(f"Creating BaseAssistant with ID: {assistant_id}, config: {config}")
         self.assistant_id = assistant_id
         self.config = config
         self.type = self.__class__.__name__.lower().replace('assistant', '')
@@ -1122,19 +1123,27 @@ class AssistantFactory:
     def _register_additional_assistants(self):
         """Register additional assistant types"""
         try:
+            logger.info("Starting registration of additional assistant types...")
+            
             # Import and register AdminAssistant
+            logger.info("Importing AdminAssistant...")
             from ..assistants.admin_assistant import AdminAssistant
             self.assistant_types["admin"] = AdminAssistant
+            logger.info("AdminAssistant registered successfully")
             
             # Import and register ContentAssistant
+            logger.info("Importing ContentAssistant...")
             from ..assistants.content_assistant import ContentAssistant
             self.assistant_types["content"] = ContentAssistant
+            logger.info("ContentAssistant registered successfully")
             
             # Import and register InsightsAssistant
+            logger.info("Importing InsightsAssistant...")
             from ..assistants.insights_assistant import InsightsAssistant
             self.assistant_types["insights"] = InsightsAssistant
+            logger.info("InsightsAssistant registered successfully")
             
-            logger.info("Additional assistant types registered successfully")
+            logger.info(f"All additional assistant types registered. Total types: {list(self.assistant_types.keys())}")
             
         except ImportError as e:
             logger.warning(f"Could not import additional assistant types: {e}")

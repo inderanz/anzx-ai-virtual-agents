@@ -221,7 +221,7 @@ class Document(Base):
     embedding = Column(Vector(768), nullable=True)
     
     # Metadata
-    metadata = Column(JSON, default=dict)  # Page number, section, etc.
+    doc_metadata = Column(JSON, default=dict)  # Page number, section, etc.
     token_count = Column(Integer, default=0)
     
     # Search optimization
@@ -272,7 +272,7 @@ class Conversation(Base):
     average_response_time = Column(Float, default=0.0)
     
     # Metadata and context
-    metadata = Column(JSON, default=dict)
+    conv_metadata = Column(JSON, default=dict)
     context = Column(JSON, default=dict)  # Conversation context for AI
     
     # Timestamps
@@ -328,7 +328,7 @@ class Message(Base):
     citations = Column(JSON, default=list)  # Knowledge sources cited
     
     # Metadata
-    metadata = Column(JSON, default=dict)
+    msg_metadata = Column(JSON, default=dict)
     
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -421,8 +421,7 @@ class AuditLog(Base):
         Index('idx_audit_logs_outcome', 'outcome'),
     )
 
-cl
-ass ChatWidget(Base):
+class ChatWidget(Base):
     """Chat widget configuration for embeddable widgets"""
     __tablename__ = "chat_widgets"
     
@@ -440,7 +439,6 @@ ass ChatWidget(Base):
     # Relationships
     organization = relationship("Organization")
     assistant = relationship("Assistant")
-    conversations = relationship("Conversation", back_populates="widget")
     
     # Indexes
     __table_args__ = (
@@ -470,7 +468,7 @@ class EmailThread(Base):
     response_count = Column(Integer, default=0)
     escalated_at = Column(DateTime)
     escalation_reason = Column(Text)
-    metadata = Column(JSON, default=dict)
+    email_metadata = Column(JSON, default=dict)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
     
@@ -488,8 +486,7 @@ class EmailThread(Base):
         Index('idx_email_threads_created_at', 'created_at'),
         Index('idx_email_threads_last_message_at', 'last_message_at'),
     )
-cl
-ass MCPServer(Base):
+class MCPServer(Base):
     """MCP Server configuration and status"""
     __tablename__ = "mcp_servers"
     
@@ -514,7 +511,7 @@ ass MCPServer(Base):
     resources_count = Column(Integer, default=0)
     
     # Metadata
-    metadata = Column(JSON, default=dict)
+    server_metadata = Column(JSON, default=dict)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
     
@@ -566,7 +563,7 @@ class MCPTool(Base):
     allowed_roles = Column(JSON, default=list)  # List of roles that can use this tool
     
     # Metadata
-    metadata = Column(JSON, default=dict)
+    tool_metadata = Column(JSON, default=dict)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
     
@@ -623,7 +620,7 @@ class MCPToolExecution(Base):
     network_requests = Column(Integer, default=0)
     
     # Metadata
-    metadata = Column(JSON, default=dict)
+    exec_metadata = Column(JSON, default=dict)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships

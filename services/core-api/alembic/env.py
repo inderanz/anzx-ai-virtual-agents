@@ -1,5 +1,5 @@
 """
-Alembic environment configuration for ANZx.ai platform
+Alembic environment configuration
 """
 
 from logging.config import fileConfig
@@ -9,11 +9,12 @@ from alembic import context
 import os
 import sys
 
-# Add the parent directory to the path so we can import our models
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+# Add the app directory to the path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
+# Import your models
 from app.models.database import Base
-from app.models.user import *  # Import all models
+from app.models import user  # This ensures all models are imported
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -34,9 +35,9 @@ target_metadata = Base.metadata
 # ... etc.
 
 
-def get_database_url():
+def get_url():
     """Get database URL from environment or config"""
-    return os.getenv("DATABASE_URL") or config.get_main_option("sqlalchemy.url")
+    return os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
 
 
 def run_migrations_offline() -> None:
@@ -51,14 +52,12 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = get_database_url()
+    url = get_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        compare_type=True,
-        compare_server_default=True,
     )
 
     with context.begin_transaction():
@@ -73,7 +72,7 @@ def run_migrations_online() -> None:
 
     """
     configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = get_database_url()
+    configuration["sqlalchemy.url"] = get_url()
     
     connectable = engine_from_config(
         configuration,
@@ -83,10 +82,7 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-            compare_type=True,
-            compare_server_default=True,
+            connection=connection, target_metadata=target_metadata
         )
 
         with context.begin_transaction():

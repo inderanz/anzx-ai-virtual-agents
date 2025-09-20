@@ -113,11 +113,7 @@ variable "stripe_secret_key" {
   sensitive   = true
 }
 
-variable "openai_api_key" {
-  description = "OpenAI API key"
-  type        = string
-  sensitive   = true
-}
+# Removed OpenAI - using Vertex AI instead
 
 variable "vertex_ai_project" {
   description = "Vertex AI project ID"
@@ -239,6 +235,25 @@ variable "enable_encryption_at_rest" {
 
 variable "enable_private_cluster" {
   description = "Enable private GKE cluster"
+  type        = bool
+  default     = true
+}
+
+# Observability variables
+variable "enable_tracing" {
+  description = "Enable distributed tracing"
+  type        = bool
+  default     = true
+}
+
+variable "enable_metrics" {
+  description = "Enable metrics collection"
+  type        = bool
+  default     = true
+}
+
+variable "enable_alerting" {
+  description = "Enable alerting"
   type        = bool
   default     = true
 }

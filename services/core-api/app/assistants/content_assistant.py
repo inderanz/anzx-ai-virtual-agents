@@ -10,7 +10,9 @@ from sqlalchemy.orm import Session
 
 from ..services.assistant_factory import BaseAssistant
 from ..services.vertex_ai_service import vertex_ai_service
-from ..services.hybrid_agent_orchestrator import hybrid_agent_orchestrator
+# Mock import for development
+# from ..services.hybrid_agent_orchestrator import hybrid_agent_orchestrator
+hybrid_agent_orchestrator = None
 
 logger = logging.getLogger(__name__)
 
@@ -244,11 +246,14 @@ Consider platform-specific requirements and best practices for each content type
                 ]
             }
             
-            # Register workflow with hybrid orchestrator
-            await hybrid_agent_orchestrator.register_workflow(
-                db=db,
-                workflow_config=content_workflow
-            )
+            # Register workflow with hybrid orchestrator (mock for development)
+            if hybrid_agent_orchestrator:
+                await hybrid_agent_orchestrator.register_workflow(
+                    db=db,
+                    workflow_config=content_workflow
+                )
+            else:
+                logger.info("Mock workflow registration for content generation")
             
             logger.info(f"Content workflows initialized for assistant: {self.assistant_id}")
             
@@ -457,17 +462,24 @@ Consider platform-specific requirements and best practices for each content type
     ) -> Dict[str, Any]:
         """Process message using custom content generation workflow"""
         try:
-            # Use hybrid orchestrator for content workflow
-            workflow_response = await hybrid_agent_orchestrator.execute_workflow(
-                db=db,
-                workflow_id=f"content_generation_{self.assistant_id}",
-                input_data={
-                    "message": message,
-                    "context": context,
-                    "brand_context": context.get("brand_context", {}),
-                    "analysis": context.get("message_analysis", {})
+            # Use hybrid orchestrator for content workflow (mock for development)
+            if hybrid_agent_orchestrator:
+                workflow_response = await hybrid_agent_orchestrator.execute_workflow(
+                    db=db,
+                    workflow_id=f"content_generation_{self.assistant_id}",
+                    input_data={
+                        "message": message,
+                        "context": context,
+                        "brand_context": context.get("brand_context", {}),
+                        "analysis": context.get("message_analysis", {})
+                    }
+                )
+            else:
+                # Mock workflow response
+                workflow_response = {
+                    "generated_content": f"This is mock generated content based on your request: '{message}'. In a full implementation, this would be created using our advanced content generation workflow.",
+                    "metadata": {"mock": True, "workflow": "content_generation"}
                 }
-            )
             
             return {
                 "content": workflow_response.get("generated_content", "I've processed your content request using our specialized workflow."),

@@ -8,9 +8,14 @@ from sqlalchemy import text, func
 from pgvector.sqlalchemy import Vector
 import logging
 
+# Import database components
+from ..models.database import engine, SessionLocal, Base, get_db, create_tables
 from ..models.user import Document, KnowledgeSource
 
 logger = logging.getLogger(__name__)
+
+# Export database components
+__all__ = ['engine', 'SessionLocal', 'Base', 'get_db', 'create_tables']
 
 
 class VectorSearchUtils:

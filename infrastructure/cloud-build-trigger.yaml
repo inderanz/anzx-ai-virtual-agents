@@ -1,0 +1,48 @@
+# Cloud Build Trigger Configuration for ANZX AI Platform
+# This file can be used to create a trigger via gcloud or GCP Console
+
+name: anzx-ai-platform-deploy
+description: "Deploy ANZX AI Platform to Cloud Run"
+
+# Trigger configuration
+github:
+  owner: anzx-ai
+  name: anzx-ai-virtual-agents
+  push:
+    branch: ^main$
+
+# Build configuration
+filename: cloudbuild.yaml
+
+# Substitutions for the build
+substitutions:
+  _DEPLOY_REGION: australia-southeast1
+  _PROJECT_ID: extreme-gecko-466211-t1
+  _ENVIRONMENT: production
+
+# Service account (optional - uses default Cloud Build service account)
+# serviceAccount: projects/extreme-gecko-466211-t1/serviceAccounts/cloud-build@extreme-gecko-466211-t1.iam.gserviceaccount.com
+
+# Approval configuration (for production safety)
+approval:
+  required: false  # Set to true for manual approval before deployment
+
+# Filter configuration
+filter: |
+  # Only trigger on changes to relevant files
+  _CHANGED_FILES.matches("services/.*") ||
+  _CHANGED_FILES.matches("infrastructure/.*") ||
+  _CHANGED_FILES.matches("cloudbuild.yaml")
+
+# Include/exclude files
+includedFiles:
+  - "services/**"
+  - "infrastructure/**"
+  - "cloudbuild.yaml"
+  - "scripts/**"
+
+ignoredFiles:
+  - "README.md"
+  - "docs/**"
+  - "*.md"
+  - ".gitignore"

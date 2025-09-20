@@ -1,0 +1,94 @@
+# ANZX AI Platform - Deployment Configuration
+# All configurable parameters for the deployment
+
+project:
+  id: "extreme-gecko-466211-t1"
+  region: "australia-southeast1"
+  zone: "australia-southeast1-a"
+
+# Infrastructure Configuration
+infrastructure:
+  app_name: "anzx-ai-platform"
+  environment: "production"
+  
+  # Database Configuration (Free Tier Optimized)
+  database:
+    name: "anzx_ai_platform"
+    user: "anzx_user"
+    tier: "db-f1-micro"  # Free tier
+    disk_size: 20        # GB
+    backup_retention: 7  # days
+    
+  # Redis Configuration (Free Tier Optimized)
+  redis:
+    memory_size: 1       # GB (minimum)
+    version: "REDIS_7_0"
+    
+  # Networking
+  vpc:
+    cidr: "10.0.0.0/24"
+    connector_cidr: "10.1.0.0/28"
+    
+  # Cloud Run Configuration (Free Tier Optimized)
+  cloud_run:
+    min_instances: 0     # Allow scaling to 0
+    max_instances: 10    # Limit for cost control
+    cpu_limit: "1000m"   # 1 vCPU
+    memory_limit: "2Gi"  # 2GB RAM
+    timeout: 300         # seconds
+    concurrency: 100
+    
+# Docker Images Configuration
+images:
+  registry_location: "australia-southeast1"
+  repository_name: "anzx-ai-platform-docker"
+  
+  services:
+    core_api:
+      name: "core-api"
+      port: 8000
+      dockerfile: "services/core-api/Dockerfile"
+      context: "services/core-api"
+      
+    knowledge_service:
+      name: "knowledge-service"
+      port: 8001
+      dockerfile: "services/knowledge-service/Dockerfile"
+      context: "services/knowledge-service"
+      
+    chat_widget:
+      name: "chat-widget"
+      port: 3000
+      dockerfile: "services/chat-widget/Dockerfile"
+      context: "services/chat-widget"
+      enabled: false  # Disabled due to ARM64 compatibility issue
+
+# Security Configuration
+security:
+  enable_ssl: true
+  enable_private_networking: true
+  enable_vpc_connector: true
+  
+# Monitoring Configuration
+monitoring:
+  enable_logging: true
+  enable_tracing: true
+  enable_metrics: true
+  log_level: "INFO"
+
+# Terraform Configuration
+terraform:
+  state_bucket_suffix: "1758328389"  # Unique suffix for state bucket
+  backend_prefix: "production"
+  
+# Cloud Build Configuration
+cloud_build:
+  timeout: "3600s"  # 1 hour
+  machine_type: "E2_STANDARD_2"  # Free tier compatible
+  
+# Feature Flags
+features:
+  enable_chat_widget: false      # Disabled due to ARM64 issue
+  enable_observability: true
+  enable_security_hardening: true
+  enable_backup: true

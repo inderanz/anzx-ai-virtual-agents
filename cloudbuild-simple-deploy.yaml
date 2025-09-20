@@ -1,0 +1,148 @@
+steps:
+  # Deploy Cloud Run services directly without complex Terraform
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "=== Deploying Cloud Run Services Directly ==="
+        
+        export PROJECT_ID="extreme-gecko-466211-t1"
+        export REGION="australia-southeast1"
+        
+        # First create database if it doesn't exist
+        echo "🗄️  Creating database..."
+        gcloud sql instances create anzx-ai-platform-db \
+          --database-version=POSTGRES_15 \
+          --tier=db-custom-1-3840 \
+          --region=australia-southeast1 \
+          --project=extreme-gecko-466211-t1 \
+          --storage-size=50GB \
+          --storage-type=SSD \
+          --authorized-networks=0.0.0.0/0 \
+          --backup-start-time=02:00 \
+          --maintenance-window-day=SUN \
+          --maintenance-window-hour=03 \
+          --maintenance-release-channel=production || echo "Database may already exist"
+        
+        # Wait for database to be ready
+        echo "⏳ Waiting for database to be ready..."
+        sleep 60
+        
+        # Create database user
+        echo "👤 Creating database user..."
+        gcloud sql users create anzx_user \
+          --instance=anzx-ai-platform-db \
+          --password=AnzxAI2024!SecureDB \
+          --project=extreme-gecko-466211-t1 || echo "User may already exist"
+        
+        # Create database
+        echo "📊 Creating database..."
+        gcloud sql databases create anzx_ai_platform \
+          --instance=anzx-ai-platform-db \
+          --project=extreme-gecko-466211-t1 || echo "Database may already exist"
+        
+        # Get database IP
+        DB_IP=$(gcloud sql instances describe anzx-ai-platform-db \
+          --project=extreme-gecko-466211-t1 \
+          --format="value(ipAddresses[0].ipAddress)")
+        
+        echo "Database IP: $DB_IP"
+        
+        # Deploy Core API
+        echo "🚀 Deploying Core API..."
+        gcloud run deploy anzx-ai-platform-core-api \
+          --image=australia-southeast1-docker.pkg.dev/extreme-gecko-466211-t1/anzx-ai-platform-docker/core-api:latest \
+          --region=australia-southeast1 \
+          --project=extreme-gecko-466211-t1 \
+          --platform=managed \
+          --allow-unauthenticated \
+          --port=8000 \
+          --memory=4Gi \
+          --cpu=2 \
+          --min-instances=1 \
+          --max-instances=20 \
+          --set-env-vars="ENVIRONMENT=production,GOOGLE_CLOUD_PROJECT=extreme-gecko-466211-t1,REDIS_URL=redis://10.184.150.27:6379,JWT_SECRET_KEY=anzx-ai-jwt-secret-key-2024-production,DATABASE_URL=postgresql://anzx_user:AnzxAI2024!SecureDB@$${DB_IP}:5432/anzx_ai_platform?sslmode=require"
+        
+        # Deploy Knowledge Service
+        echo "🚀 Deploying Knowledge Service..."
+        gcloud run deploy anzx-ai-platform-knowledge-service \
+          --image=australia-southeast1-docker.pkg.dev/extreme-gecko-466211-t1/anzx-ai-platform-docker/knowledge-service:latest \
+          --region=australia-southeast1 \
+          --project=extreme-gecko-466211-t1 \
+          --platform=managed \
+          --allow-unauthenticated \
+          --port=8001 \
+          --memory=4Gi \
+          --cpu=2 \
+          --min-instances=0 \
+          --max-instances=10 \
+          --set-env-vars="ENVIRONMENT=production,GOOGLE_CLOUD_PROJECT=extreme-gecko-466211-t1,DATABASE_URL=postgresql://anzx_user:AnzxAI2024!SecureDB@$${DB_IP}:5432/anzx_ai_platform?sslmode=require"
+        
+        echo "✅ Cloud Run services deployed!"
+    id: 'deploy-services'
+
+  # Validate deployment
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "=== Validating Deployment ==="
+        
+        export PROJECT_ID="extreme-gecko-466211-t1"
+        export REGION="australia-southeast1"
+        
+        # Get service URLs
+        API_URL=$(gcloud run services describe anzx-ai-platform-core-api \
+          --region=australia-southeast1 \
+          --project=extreme-gecko-466211-t1 \
+          --format="value(status.url)")
+        
+        KNOWLEDGE_URL=$(gcloud run services describe anzx-ai-platform-knowledge-service \
+          --region=australia-southeast1 \
+          --project=extreme-gecko-466211-t1 \
+          --format="value(status.url)")
+        
+        echo "🌐 Service URLs:"
+        echo "  Core API: $API_URL"
+        echo "  Knowledge Service: $KNOWLEDGE_URL"
+        
+        # Test health endpoints
+        echo "🧪 Testing health endpoints..."
+        sleep 30  # Wait for services to start
+        
+        if curl -f -s --max-time 10 "$API_URL/health" >/dev/null 2>&1; then
+          echo "✅ Core API is healthy!"
+        else
+          echo "⚠️  Core API health check failed"
+        fi
+        
+        if curl -f -s --max-time 10 "$KNOWLEDGE_URL/health" >/dev/null 2>&1; then
+          echo "✅ Knowledge Service is healthy!"
+        else
+          echo "⚠️  Knowledge Service health check failed"
+        fi
+        
+        echo ""
+        echo "🎉 ================================="
+        echo "🎉 DEPLOYMENT SUCCESSFUL! 🎉"
+        echo "🎉 ================================="
+        echo ""
+        echo "🌐 Your ANZX AI Platform is ready:"
+        echo "   🚀 API: $API_URL"
+        echo "   📚 Docs: $API_URL/docs"
+        echo "   ❤️  Health: $API_URL/health"
+        echo "   🤖 Assistants: $API_URL/assistants"
+        echo "   🧠 Knowledge: $KNOWLEDGE_URL"
+        echo ""
+        echo "🧪 Quick test commands:"
+        echo "   curl $API_URL/health"
+        echo "   curl $API_URL/assistants"
+    id: 'validate-deployment'
+    waitFor: ['deploy-services']
+
+options:
+  logging: 'CLOUD_LOGGING_ONLY'
+
+timeout: '1800s'

@@ -20,9 +20,9 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy requirements and install Python dependencies
-COPY requirements.txt requirements-prod.txt ./
+COPY requirements.txt requirements-simple.txt ./
 RUN pip install --upgrade pip && \
-    pip install -r requirements-prod.txt
+    pip install -r requirements-simple.txt
 
 # Production stage
 FROM python:3.11-slim as production

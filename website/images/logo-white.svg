@@ -1,0 +1,46 @@
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient circle -->
+  <defs>
+    <linearGradient id="logoGradientWhite" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.2" />
+      <stop offset="50%" style="stop-color:#ffffff;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Logo icon -->
+  <circle cx="30" cy="30" r="25" fill="url(#logoGradientWhite)"/>
+  <circle cx="30" cy="30" r="20" fill="rgba(255,255,255,0.1)"/>
+  <circle cx="30" cy="30" r="15" fill="rgba(255,255,255,0.2)"/>
+  
+  <!-- AI Brain/Neural network pattern -->
+  <g transform="translate(30,30)">
+    <!-- Central node -->
+    <circle cx="0" cy="0" r="3" fill="white"/>
+    
+    <!-- Neural connections -->
+    <g stroke="white" stroke-width="1.5" opacity="0.8">
+      <line x1="0" y1="0" x2="-8" y2="-6"/>
+      <line x1="0" y1="0" x2="8" y2="-6"/>
+      <line x1="0" y1="0" x2="-8" y2="6"/>
+      <line x1="0" y1="0" x2="8" y2="6"/>
+      <line x1="0" y1="0" x2="0" y2="-10"/>
+      <line x1="0" y1="0" x2="0" y2="10"/>
+    </g>
+    
+    <!-- Outer nodes -->
+    <circle cx="-8" cy="-6" r="2" fill="white" opacity="0.9"/>
+    <circle cx="8" cy="-6" r="2" fill="white" opacity="0.9"/>
+    <circle cx="-8" cy="6" r="2" fill="white" opacity="0.9"/>
+    <circle cx="8" cy="6" r="2" fill="white" opacity="0.9"/>
+    <circle cx="0" cy="-10" r="2" fill="white" opacity="0.9"/>
+    <circle cx="0" cy="10" r="2" fill="white" opacity="0.9"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="70" y="25" font-family="Inter, sans-serif" font-size="24" font-weight="700" fill="white">ANZx</text>
+  <text x="130" y="25" font-family="Inter, sans-serif" font-size="24" font-weight="300" fill="rgba(255,255,255,0.8)">.ai</text>
+  
+  <!-- Tagline -->
+  <text x="70" y="42" font-family="Inter, sans-serif" font-size="10" font-weight="400" fill="rgba(255,255,255,0.6)">Intelligent Virtual Agents</text>
+</svg>

@@ -1,0 +1,90 @@
+# Production requirements for ANZX AI Platform Core API
+
+# Core FastAPI and ASGI
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+gunicorn==21.2.0
+
+# Database
+sqlalchemy==2.0.23
+alembic==1.12.1
+psycopg2-binary==2.9.9
+asyncpg==0.29.0
+
+# Redis
+redis==5.0.1
+hiredis==2.2.3
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+cryptography==41.0.7
+
+# Google Cloud
+cloud-sql-python-connector==1.11.0
+google-cloud-secret-manager==2.17.0
+google-cloud-storage==2.10.0
+google-cloud-logging==3.8.0
+google-cloud-monitoring==2.16.0
+google-cloud-aiplatform==1.38.1
+google-cloud-documentai==2.21.0
+
+# HTTP Client
+httpx==0.25.2
+aiohttp==3.9.1
+
+# Data Processing
+pandas==2.1.4
+numpy==1.25.2
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Vector Database
+pgvector==0.2.4
+
+# Text Processing
+tiktoken==0.5.2
+langchain==0.1.0
+langchain-google-vertexai==0.1.0
+
+# Monitoring & Observability
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+opentelemetry-instrumentation-fastapi==0.42b0
+opentelemetry-instrumentation-sqlalchemy==0.42b0
+opentelemetry-exporter-gcp-monitoring==1.9.0a0
+
+# Utilities
+python-dotenv==1.0.0
+email-validator==2.1.0
+python-dateutil==2.8.2
+pytz==2023.3
+celery==5.3.4
+
+# Payment Processing
+stripe==7.8.0
+
+# File Processing
+python-magic==0.4.27
+PyPDF2==3.0.1
+python-docx==1.1.0
+
+# Email
+emails==0.6.0
+
+# Validation & Serialization
+marshmallow==3.20.1
+jsonschema==4.20.0
+
+# Rate Limiting
+slowapi==0.1.9
+
+# CORS - using built-in FastAPI CORS
+# fastapi-cors==0.0.6
+
+# Health Checks
+py-healthcheck==1.10.1
+
+# Production WSGI Server
+waitress==2.1.2

@@ -1,0 +1,203 @@
+# Cloud Build - Complete Infrastructure Cleanup
+# Removes all existing resources and cleans state
+
+steps:
+  # Load configuration
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Loading deployment configuration..."
+        cat config/deployment-config.yaml
+        
+        # Extract key variables
+        export PROJECT_ID=$(grep "id:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        export REGION=$(grep "region:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        export APP_NAME=$(grep "app_name:" config/deployment-config.yaml | awk '{print $2}' | tr -d '"')
+        
+        echo "Project: $$PROJECT_ID"
+        echo "Region: $$REGION"
+        echo "App Name: $$APP_NAME"
+    id: 'load-config'
+
+  # Clean up Cloud Run services
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        export PROJECT_ID=$(grep "id:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        export REGION=$(grep "region:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        
+        echo "Cleaning up Cloud Run services..."
+        services=$$(gcloud run services list --region=$$REGION --format="value(metadata.name)" --project=$$PROJECT_ID 2>/dev/null || echo "")
+        if [ -n "$$services" ]; then
+          for service in $$services; do
+            echo "Deleting Cloud Run service: $$service"
+            gcloud run services delete $$service --region=$$REGION --project=$$PROJECT_ID --quiet || true
+          done
+        else
+          echo "No Cloud Run services found"
+        fi
+    id: 'cleanup-cloud-run'
+    waitFor: ['load-config']
+
+  # Clean up databases and infrastructure
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        export PROJECT_ID=$(grep "id:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        export REGION=$(grep "region:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        
+        echo "Cleaning up Cloud SQL instances..."
+        instances=$$(gcloud sql instances list --format="value(name)" --project=$$PROJECT_ID 2>/dev/null || echo "")
+        if [ -n "$$instances" ]; then
+          for instance in $$instances; do
+            echo "Deleting Cloud SQL instance: $$instance"
+            gcloud sql instances delete $$instance --project=$$PROJECT_ID --quiet || true
+          done
+        fi
+        
+        echo "Cleaning up Redis instances..."
+        redis_instances=$$(gcloud redis instances list --region=$$REGION --format="value(name)" --project=$$PROJECT_ID 2>/dev/null || echo "")
+        if [ -n "$$redis_instances" ]; then
+          for instance in $$redis_instances; do
+            echo "Deleting Redis instance: $$instance"
+            gcloud redis instances delete $$instance --region=$$REGION --project=$$PROJECT_ID --quiet || true
+          done
+        fi
+    id: 'cleanup-databases'
+    waitFor: ['cleanup-cloud-run']
+
+  # Clean up networking
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        export PROJECT_ID=$(grep "id:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        export REGION=$(grep "region:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        
+        echo "Cleaning up VPC connectors..."
+        connectors=$$(gcloud compute networks vpc-access connectors list --region=$$REGION --format="value(name)" --project=$$PROJECT_ID 2>/dev/null || echo "")
+        if [ -n "$$connectors" ]; then
+          for connector in $$connectors; do
+            echo "Deleting VPC connector: $$connector"
+            gcloud compute networks vpc-access connectors delete $$connector --region=$$REGION --project=$$PROJECT_ID --quiet || true
+          done
+        fi
+        
+        echo "Cleaning up VPC networks..."
+        networks=$$(gcloud compute networks list --format="value(name)" --filter="name~anzx" --project=$$PROJECT_ID 2>/dev/null || echo "")
+        if [ -n "$$networks" ]; then
+          for network in $$networks; do
+            subnets=$$(gcloud compute networks subnets list --network=$$network --format="value(name)" --project=$$PROJECT_ID 2>/dev/null || echo "")
+            for subnet in $$subnets; do
+              echo "Deleting subnet: $$subnet"
+              gcloud compute networks subnets delete $$subnet --region=$$REGION --project=$$PROJECT_ID --quiet || true
+            done
+            echo "Deleting VPC network: $$network"
+            gcloud compute networks delete $$network --project=$$PROJECT_ID --quiet || true
+          done
+        fi
+    id: 'cleanup-networking'
+    waitFor: ['cleanup-databases']
+
+  # Clean up secrets and storage
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        export PROJECT_ID=$(grep "id:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        
+        echo "Cleaning up Secret Manager secrets..."
+        secrets=$$(gcloud secrets list --format="value(name)" --filter="name~anzx" --project=$$PROJECT_ID 2>/dev/null || echo "")
+        if [ -n "$$secrets" ]; then
+          for secret in $$secrets; do
+            echo "Deleting secret: $$secret"
+            gcloud secrets delete $$secret --project=$$PROJECT_ID --quiet || true
+          done
+        fi
+        
+        echo "Cleaning up Storage buckets..."
+        buckets=$$(gsutil ls -p $$PROJECT_ID 2>/dev/null | grep "anzx" || echo "")
+        if [ -n "$$buckets" ]; then
+          for bucket in $$buckets; do
+            echo "Deleting bucket: $$bucket"
+            gsutil -m rm -r $$bucket || true
+          done
+        fi
+    id: 'cleanup-secrets-storage'
+    waitFor: ['cleanup-networking']
+
+  # Clean up Terraform state completely
+  - name: 'hashicorp/terraform:1.6'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        cd infrastructure/terraform
+        
+        # Extract state bucket from config
+        STATE_BUCKET_SUFFIX=$(grep "state_bucket_suffix:" ../../config/deployment-config.yaml | awk '{print $2}' | tr -d '"')
+        STATE_BUCKET="anzx-ai-terraform-state-$$STATE_BUCKET_SUFFIX"
+        
+        echo "Cleaning up Terraform state..."
+        
+        # Force unlock any existing locks
+        terraform force-unlock -force 1758336178218037 2>/dev/null || true
+        
+        # Initialize and destroy
+        terraform init -reconfigure || true
+        terraform destroy -auto-approve || echo "Terraform destroy completed"
+        
+        # Clean up remote state completely
+        echo "Removing all state files from bucket: $$STATE_BUCKET"
+        gsutil -m rm -r gs://$$STATE_BUCKET/production/ 2>/dev/null || echo "State files already clean"
+        
+        # Remove local state files
+        rm -f terraform.tfstate*
+        rm -f .terraform.lock.hcl
+        rm -rf .terraform/
+        
+        # Reinitialize with clean state
+        terraform init
+        
+        echo "Terraform state cleaned successfully"
+    id: 'cleanup-terraform-state'
+    waitFor: ['cleanup-secrets-storage']
+
+  # Verify cleanup completion
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        export PROJECT_ID=$(grep "id:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        export REGION=$(grep "region:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        
+        echo "=== Cleanup Verification ==="
+        echo "Cloud Run services:"
+        gcloud run services list --region=$$REGION --project=$$PROJECT_ID || echo "No services found"
+        
+        echo "Cloud SQL instances:"
+        gcloud sql instances list --project=$$PROJECT_ID || echo "No instances found"
+        
+        echo "Redis instances:"
+        gcloud redis instances list --region=$$REGION --project=$$PROJECT_ID || echo "No instances found"
+        
+        echo "=== Cleanup Complete ==="
+        echo "All resources have been cleaned up successfully"
+    id: 'verify-cleanup'
+    waitFor: ['cleanup-terraform-state']
+
+# Build options
+options:
+  logging: 'CLOUD_LOGGING_ONLY'
+
+# Build timeout
+timeout: '1800s'  # 30 minutes

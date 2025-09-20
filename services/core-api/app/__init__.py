@@ -1,1 +1,1 @@
-# ANZx.ai Core API Application
+# ANZX AI Platform Core API

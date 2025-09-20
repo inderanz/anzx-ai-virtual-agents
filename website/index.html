@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANZx.ai - Next-Generation AI Agents for Australian Businesses</title>
+    <meta name="description" content="Transform your business with intelligent AI agents that understand, learn, and deliver exceptional customer experiences. Built for Australian businesses with enterprise-grade security.">
+    <meta name="keywords" content="AI agents, artificial intelligence, customer service, Australian business, automation, machine learning, conversational AI">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="ANZx.ai - Next-Generation AI Agents">
+    <meta property="og:description" content="Transform your business with intelligent AI agents built for Australian enterprises.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://anzx.ai">
+    <meta property="og:image" content="https://anzx.ai/images/og-image.jpg">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ANZx.ai - Next-Generation AI Agents">
+    <meta name="twitter:description" content="Transform your business with intelligent AI agents built for Australian enterprises.">
+    <meta name="twitter:image" content="https://anzx.ai/images/og-image.jpg">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="images/logo.svg">
+    <link rel="alternate icon" href="/favicon.ico">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <img src="images/logo.svg" alt="ANZx.ai" class="logo">
+            </div>
+            <div class="nav-menu" id="nav-menu">
+                <div class="nav-links">
+                    <a href="#solutions" class="nav-link">Solutions</a>
+                    <a href="#platform" class="nav-link">Platform</a>
+                    <a href="#pricing" class="nav-link">Pricing</a>
+                    <a href="#resources" class="nav-link">Resources</a>
+                    <a href="#company" class="nav-link">Company</a>
+                </div>
+                <div class="nav-actions">
+                    <a href="/auth/login" class="nav-link nav-login">Sign In</a>
+                    <a href="/auth/register" class="btn btn-primary nav-cta">Get Started</a>
+                </div>
+            </div>
+            <div class="nav-toggle" id="nav-toggle">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-background">
+            <div class="hero-gradient"></div>
+            <div class="hero-particles"></div>
+            <div class="animated-bg" id="animated-bg">
+                <div class="floating-circle circle-1"></div>
+                <div class="floating-circle circle-2"></div>
+                <div class="floating-circle circle-3"></div>
+                <div class="floating-circle circle-4"></div>
+                <div class="floating-circle circle-5"></div>
+                <div class="floating-circle circle-6"></div>
+            </div>
+            <canvas id="interactive-canvas" width="1920" height="1080"></canvas>
+        </div>
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="badge-icon">✨</span>
+                    <span>Powered by Advanced AI</span>
+                </div>
+                <h1 class="hero-title">
+                    The Future of 
+                    <span class="hero-gradient-text">AI Agents</span>
+                    for Australian Business
+                </h1>
+                <p class="hero-description">
+                    Deploy intelligent AI agents that understand your business context, learn from every interaction, 
+                    and deliver personalized experiences at scale. Built with enterprise-grade security and Australian compliance.
+                </p>
+                <div class="hero-cta">
+                    <a href="/auth/register" class="btn btn-primary btn-large">
+                        <span>Start Building</span>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M4.16667 10H15.8333M15.8333 10L10.8333 5M15.8333 10L10.8333 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                    <a href="#demo" class="btn btn-secondary btn-large">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M6.66667 5L13.3333 10L6.66667 15V5Z" fill="currentColor"/>
+                        </svg>
+                        <span>Watch Demo</span>
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">99.9%</div>
+                        <div class="stat-label">Uptime</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">&lt;100ms</div>
+                        <div class="stat-label">Response Time</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">AI Availability</div>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="ai-interface" id="ai-interface">
+                    <div class="interface-header">
+                        <div class="interface-controls">
+                            <div class="control-dot red"></div>
+                            <div class="control-dot yellow"></div>
+                            <div class="control-dot green"></div>
+                        </div>
+                        <div class="interface-title">ANZx.ai Agent Console</div>
+                        <div class="interface-status">
+                            <div class="status-indicator active"></div>
+                            <span>Live</span>
+                        </div>
+                    </div>
+                    <div class="interface-content">
+                        <div class="agent-cards">
+                            <div class="agent-card active">
+                                <div class="agent-avatar support"></div>
+                                <div class="agent-info">
+                                    <div class="agent-name">Support Agent</div>
+                                    <div class="agent-status">Active • 247 conversations</div>
+                                </div>
+                                <div class="agent-metrics">
+                                    <div class="metric">
+                                        <span class="metric-value">98%</span>
+                                        <span class="metric-label">Satisfaction</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="agent-card">
+                                <div class="agent-avatar sales"></div>
+                                <div class="agent-info">
+                                    <div class="agent-name">Sales Agent</div>
+                                    <div class="agent-status">Active • 89 leads</div>
+                                </div>
+                                <div class="agent-metrics">
+                                    <div class="metric">
+                                        <span class="metric-value">34%</span>
+                                        <span class="metric-label">Conversion</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="agent-card">
+                                <div class="agent-avatar insights"></div>
+                                <div class="agent-info">
+                                    <div class="agent-name">Insights Agent</div>
+                                    <div class="agent-status">Active • 12 reports</div>
+                                </div>
+                                <div class="agent-metrics">
+                                    <div class="metric">
+                                        <span class="metric-value">5.2x</span>
+                                        <span class="metric-label">Efficiency</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="conversation-preview">
+                            <div class="message ai-message">
+                                <div class="message-avatar"></div>
+                                <div class="message-content">
+                                    <div class="message-text">I've analyzed your customer data and identified 3 key opportunities for growth...</div>
+                                    <div class="message-actions">
+                                        <button class="action-btn">View Report</button>
+                                        <button class="action-btn">Schedule Meeting</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solutions Section -->
+    <section id="solutions" class="solutions">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">
+                    <span class="badge-icon">⚡</span>
+                    <span>Solutions</span>
+                </div>
+                <h2 class="section-title">AI Agents for Every Business Need</h2>
+                <p class="section-description">
+                    Deploy specialized AI agents that understand your industry, integrate with your tools, 
+                    and deliver exceptional experiences across every customer touchpoint.
+                </p>
+            </div>
+            
+            <div class="solutions-grid">
+                <div class="solution-card featured">
+                    <div class="solution-header">
+                        <div class="solution-icon support-gradient">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div class="solution-meta">
+                            <h3 class="solution-title">Customer Support</h3>
+                            <p class="solution-subtitle">24/7 intelligent support that scales</p>
+                        </div>
+                    </div>
+                    <p class="solution-description">
+                        Deploy AI agents that handle customer inquiries, troubleshoot issues, and escalate complex cases to human agents when needed.
+                    </p>
+                    <div class="solution-features">
+                        <div class="feature-item">
+                            <span class="feature-check">✓</span>
+                            <span>Multi-language support</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-check">✓</span>
+                            <span>Sentiment analysis</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-check">✓</span>
+                            <span>Smart escalation</span>
+                        </div>
+                    </div>
+                    <div class="solution-metrics">
+                        <div class="metric">
+                            <span class="metric-value">85%</span>
+                            <span class="metric-label">Resolution rate</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">60%</span>
+                            <span class="metric-label">Cost reduction</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="solution-card">
+                    <div class="solution-header">
+                        <div class="solution-icon sales-gradient">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div class="solution-meta">
+                            <h3 class="solution-title">Sales & Lead Generation</h3>
+                            <p class="solution-subtitle">Convert visitors into customers</p>
+                        </div>
+                    </div>
+                    <p class="solution-description">
+                        Qualify leads, schedule demos, and guide prospects through your sales funnel with intelligent conversation flows.
+                    </p>
+                    <div class="solution-features">
+                        <div class="feature-item">
+                            <span class="feature-check">✓</span>
+                            <span>Lead qualification</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-check">✓</span>
+                            <span>Meeting scheduling</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-check">✓</span>
+                            <span>CRM integration</span>
+                        </div>
+                    </div>
+                    <div class="solution-metrics">
+                        <div class="metric">
+                            <span class="metric-value">3x</span>
+                            <span class="metric-label">Lead conversion</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">40%</span>
+                            <span class="metric-label">More meetings</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="solution-card">
+                    <div class="solution-header">
+                        <div class="solution-icon insights-gradient">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div class="solution-meta">
+                            <h3 class="solution-title">Business Intelligence</h3>
+                            <p class="solution-subtitle">Data-driven insights at scale</p>
+                        </div>
+                    </div>
+                    <p class="solution-description">
+                        Transform your data into actionable insights with AI agents that analyze trends, generate reports, and provide recommendations.
+                    </p>
+                    <div class="solution-features">
+                        <div class="feature-item">
+                            <span class="feature-check">✓</span>
+                            <span>Natural language queries</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-check">✓</span>
+                            <span>Automated reporting</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-check">✓</span>
+                            <span>Predictive analytics</span>
+                        </div>
+                    </div>
+                    <div class="solution-metrics">
+                        <div class="metric">
+                            <span class="metric-value">10x</span>
+                            <span class="metric-label">Faster insights</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">90%</span>
+                            <span class="metric-label">Time saved</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Platform Section -->
+    <section id="platform" class="platform">
+        <div class="container">
+            <div class="platform-content">
+                <div class="platform-text">
+                    <div class="section-badge">
+                        <span class="badge-icon">🚀</span>
+                        <span>Platform</span>
+                    </div>
+                    <h2 class="section-title">Built for Enterprise Scale</h2>
+                    <p class="section-description">
+                        Our platform combines cutting-edge AI with enterprise-grade infrastructure, 
+                        ensuring your AI agents are reliable, secure, and compliant with Australian regulations.
+                    </p>
+                    
+                    <div class="platform-features">
+                        <div class="platform-feature">
+                            <div class="feature-icon-wrapper">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M10 2L3 7v11h4v-6h6v6h4V7l-7-5z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="feature-content">
+                                <h4 class="feature-title">Australian Data Sovereignty</h4>
+                                <p class="feature-description">All data stored and processed within Australian borders with full compliance.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="platform-feature">
+                            <div class="feature-icon-wrapper">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M10 1L13.09 6.26L19 7L14.5 11.74L15.82 17.74L10 15L4.18 17.74L5.5 11.74L1 7L6.91 6.26L10 1Z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="feature-content">
+                                <h4 class="feature-title">99.9% Uptime SLA</h4>
+                                <p class="feature-description">Enterprise-grade reliability with automatic failover and redundancy.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="platform-feature">
+                            <div class="feature-icon-wrapper">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h6a1 1 0 100-2H9z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="feature-content">
+                                <h4 class="feature-title">Enterprise Security</h4>
+                                <p class="feature-description">End-to-end encryption, SOC 2 compliance, and advanced threat protection.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="platform-cta">
+                        <a href="/auth/register" class="btn btn-primary btn-large">Start Building</a>
+                        <a href="#demo" class="btn btn-secondary btn-large">View Demo</a>
+                    </div>
+                </div>
+                
+                <div class="platform-visual">
+                    <div class="platform-dashboard">
+                        <div class="dashboard-header">
+                            <div class="dashboard-nav">
+                                <div class="nav-item active">Overview</div>
+                                <div class="nav-item">Agents</div>
+                                <div class="nav-item">Analytics</div>
+                                <div class="nav-item">Settings</div>
+                            </div>
+                        </div>
+                        <div class="dashboard-content">
+                            <div class="dashboard-stats">
+                                <div class="stat-card">
+                                    <div class="stat-icon">💬</div>
+                                    <div class="stat-info">
+                                        <div class="stat-number">12,847</div>
+                                        <div class="stat-label">Conversations</div>
+                                        <div class="stat-change positive">+23%</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">⚡</div>
+                                    <div class="stat-info">
+                                        <div class="stat-number">98.5%</div>
+                                        <div class="stat-label">Resolution Rate</div>
+                                        <div class="stat-change positive">+5.2%</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">⏱️</div>
+                                    <div class="stat-info">
+                                        <div class="stat-number">1.2s</div>
+                                        <div class="stat-label">Avg Response</div>
+                                        <div class="stat-change positive">-0.3s</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dashboard-chart">
+                                <div class="chart-header">
+                                    <h4>Agent Performance</h4>
+                                    <div class="chart-legend">
+                                        <div class="legend-item">
+                                            <div class="legend-color support"></div>
+                                            <span>Support</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-color sales"></div>
+                                            <span>Sales</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-color insights"></div>
+                                            <span>Insights</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chart-area">
+                                    <svg width="100%" height="200" viewBox="0 0 400 200">
+                                        <defs>
+                                            <linearGradient id="supportGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.3" />
+                                                <stop offset="100%" style="stop-color:#10b981;stop-opacity:0" />
+                                            </linearGradient>
+                                            <linearGradient id="salesGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.3" />
+                                                <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0" />
+                                            </linearGradient>
+                                        </defs>
+                                        <path d="M0,150 Q100,120 200,100 T400,80" stroke="#10b981" stroke-width="3" fill="none"/>
+                                        <path d="M0,180 Q100,160 200,140 T400,120" stroke="#3b82f6" stroke-width="3" fill="none"/>
+                                        <path d="M0,150 Q100,120 200,100 T400,80 L400,200 L0,200 Z" fill="url(#supportGradient)"/>
+                                        <path d="M0,180 Q100,160 200,140 T400,120 L400,200 L0,200 Z" fill="url(#salesGradient)"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Simple, Transparent Pricing</h2>
+                <p class="section-description">
+                    Choose the plan that fits your business needs. All plans include Australian hosting and support.
+                </p>
+            </div>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <h3 class="pricing-title">Starter</h3>
+                        <div class="pricing-price">
+                            <span class="currency">$</span>
+                            <span class="amount">49</span>
+                            <span class="period">/month</span>
+                        </div>
+                    </div>
+                    <div class="pricing-features">
+                        <div class="pricing-feature">✓ 1 AI Assistant</div>
+                        <div class="pricing-feature">✓ 1,000 conversations/month</div>
+                        <div class="pricing-feature">✓ Basic integrations</div>
+                        <div class="pricing-feature">✓ Email support</div>
+                        <div class="pricing-feature">✓ Australian hosting</div>
+                    </div>
+                    <a href="/auth/register?plan=starter" class="btn btn-outline">Start Free Trial</a>
+                </div>
+                
+                <div class="pricing-card featured">
+                    <div class="pricing-badge">Most Popular</div>
+                    <div class="pricing-header">
+                        <h3 class="pricing-title">Professional</h3>
+                        <div class="pricing-price">
+                            <span class="currency">$</span>
+                            <span class="amount">149</span>
+                            <span class="period">/month</span>
+                        </div>
+                    </div>
+                    <div class="pricing-features">
+                        <div class="pricing-feature">✓ 3 AI Assistants</div>
+                        <div class="pricing-feature">✓ 10,000 conversations/month</div>
+                        <div class="pricing-feature">✓ Advanced integrations</div>
+                        <div class="pricing-feature">✓ Priority support</div>
+                        <div class="pricing-feature">✓ Custom knowledge base</div>
+                        <div class="pricing-feature">✓ Analytics dashboard</div>
+                    </div>
+                    <a href="/auth/register?plan=professional" class="btn btn-primary">Start Free Trial</a>
+                </div>
+                
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <h3 class="pricing-title">Enterprise</h3>
+                        <div class="pricing-price">
+                            <span class="amount">Custom</span>
+                        </div>
+                    </div>
+                    <div class="pricing-features">
+                        <div class="pricing-feature">✓ Unlimited assistants</div>
+                        <div class="pricing-feature">✓ Unlimited conversations</div>
+                        <div class="pricing-feature">✓ Custom integrations</div>
+                        <div class="pricing-feature">✓ Dedicated support</div>
+                        <div class="pricing-feature">✓ SLA guarantees</div>
+                        <div class="pricing-feature">✓ On-premise deployment</div>
+                    </div>
+                    <a href="#contact" class="btn btn-outline">Contact Sales</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Documentation Section -->
+    <section id="docs" class="documentation">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Developer Resources</h2>
+                <p class="section-description">
+                    Everything you need to integrate and customize your AI assistants
+                </p>
+            </div>
+            <div class="docs-grid">
+                <div class="doc-card">
+                    <div class="doc-icon">📖</div>
+                    <h3 class="doc-title">API Documentation</h3>
+                    <p class="doc-description">Complete REST API reference with interactive examples</p>
+                    <a href="/docs/api" class="doc-link">View API Docs →</a>
+                </div>
+                <div class="doc-card">
+                    <div class="doc-icon">🚀</div>
+                    <h3 class="doc-title">Quick Start Guide</h3>
+                    <p class="doc-description">Get up and running in 5 minutes with our step-by-step guide</p>
+                    <a href="/docs/quickstart" class="doc-link">Get Started →</a>
+                </div>
+                <div class="doc-card">
+                    <div class="doc-icon">🔌</div>
+                    <h3 class="doc-title">Integrations</h3>
+                    <p class="doc-description">Connect with Stripe, Xero, Slack, and 50+ other services</p>
+                    <a href="/docs/integrations" class="doc-link">View Integrations →</a>
+                </div>
+                <div class="doc-card">
+                    <div class="doc-icon">💡</div>
+                    <h3 class="doc-title">Examples</h3>
+                    <p class="doc-description">Real-world examples and use cases for different industries</p>
+                    <a href="/docs/examples" class="doc-link">Browse Examples →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <div class="about-content">
+                <div class="about-text">
+                    <h2 class="section-title">Built for Australian Businesses</h2>
+                    <p class="about-description">
+                        ANZX AI Platform is designed specifically for Australian businesses, with local data hosting, 
+                        compliance with Australian Privacy Principles, and support for local business needs.
+                    </p>
+                    <div class="about-features">
+                        <div class="about-feature">
+                            <span class="about-icon">🏢</span>
+                            <div>
+                                <h4>Local Data Hosting</h4>
+                                <p>All data stored in Australian data centers with full sovereignty</p>
+                            </div>
+                        </div>
+                        <div class="about-feature">
+                            <span class="about-icon">⚖️</span>
+                            <div>
+                                <h4>Privacy Compliant</h4>
+                                <p>Full compliance with Australian Privacy Principles and OAIC requirements</p>
+                            </div>
+                        </div>
+                        <div class="about-feature">
+                            <span class="about-icon">🕐</span>
+                            <div>
+                                <h4>Local Support</h4>
+                                <p>Australian business hours support with local expertise</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-visual">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number">99.9%</div>
+                            <div class="stat-label">Uptime SLA</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">&lt;200ms</div>
+                            <div class="stat-label">Response Time</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">24/7</div>
+                            <div class="stat-label">AI Availability</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">100%</div>
+                            <div class="stat-label">Australian Hosted</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Get in Touch</h2>
+                <p class="section-description">
+                    Ready to transform your customer experience? Let's talk about your needs.
+                </p>
+            </div>
+            <div class="contact-content">
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <div class="contact-icon">📧</div>
+                        <div>
+                            <h4>Email</h4>
+                            <p>hello@anzx-ai.com</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-icon">💬</div>
+                        <div>
+                            <h4>Live Chat</h4>
+                            <p>Available 9 AM - 5 PM AEST</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-icon">📞</div>
+                        <div>
+                            <h4>Phone</h4>
+                            <p>1300 ANZX AI (1300 269 924)</p>
+                        </div>
+                    </div>
+                </div>
+                <form class="contact-form" id="contact-form">
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="company">Company</label>
+                        <input type="text" id="company" name="company">
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Message</label>
+                        <textarea id="message" name="message" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <img src="images/logo-white.svg" alt="ANZx.ai" class="logo">
+                    </div>
+                    <p class="footer-description">
+                        Next-generation AI agents for Australian businesses. 
+                        Built with enterprise-grade security, compliance, and performance.
+                    </p>
+                    <div class="footer-social">
+                        <a href="#" class="social-link" aria-label="LinkedIn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Twitter">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link" aria-label="GitHub">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4 class="footer-title">Solutions</h4>
+                    <ul class="footer-links">
+                        <li><a href="#solutions">Customer Support</a></li>
+                        <li><a href="#solutions">Sales & Lead Gen</a></li>
+                        <li><a href="#solutions">Business Intelligence</a></li>
+                        <li><a href="#platform">Platform</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4 class="footer-title">Resources</h4>
+                    <ul class="footer-links">
+                        <li><a href="/docs">Documentation</a></li>
+                        <li><a href="/docs/api">API Reference</a></li>
+                        <li><a href="/blog">Blog</a></li>
+                        <li><a href="/status">Status</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4 class="footer-title">Company</h4>
+                    <ul class="footer-links">
+                        <li><a href="/about">About</a></li>
+                        <li><a href="/careers">Careers</a></li>
+                        <li><a href="/contact">Contact</a></li>
+                        <li><a href="/privacy">Privacy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 ANZx.ai. All rights reserved. Built in Australia 🇦🇺</p>
+                <div class="footer-badges">
+                    <span class="badge">SOC 2 Compliant</span>
+                    <span class="badge">Australian Hosted</span>
+                    <span class="badge">Privacy Act Compliant</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Chat Widget -->
+    <div id="anzx-chat-widget"></div>
+
+    <!-- Scripts -->
+    <script src="scripts/main.js"></script>
+    <script>
+        // Initialize chat widget
+        window.anzxChatConfig = {
+            organizationId: 'demo-org',
+            assistantId: 'demo-assistant',
+            theme: 'gradient',
+            position: 'bottom-right',
+            title: 'ANZx.ai Demo',
+            subtitle: 'Try our AI assistant!',
+            primaryColor: '#667eea',
+            accentColor: '#f093fb'
+        };
+        
+        // Simulate chat widget loading
+        setTimeout(() => {
+            const widget = document.getElementById('anzx-chat-widget');
+            if (widget) {
+                widget.innerHTML = `
+                    <div class="chat-widget-button" onclick="toggleChatWidget()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                `;
+                
+                // Add widget styles
+                const style = document.createElement('style');
+                style.textContent = `
+                    .chat-widget-button {
+                        position: fixed;
+                        bottom: 24px;
+                        right: 24px;
+                        width: 60px;
+                        height: 60px;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: white;
+                        cursor: pointer;
+                        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+                        transition: all 0.3s ease;
+                        z-index: 1000;
+                        animation: pulse 2s infinite;
+                    }
+                    
+                    .chat-widget-button:hover {
+                        transform: scale(1.1);
+                        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+                    }
+                    
+                    @keyframes pulse {
+                        0% { box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+                        50% { box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4), 0 0 0 10px rgba(102, 126, 234, 0.1); }
+                        100% { box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }, 2000);
+        
+        function toggleChatWidget() {
+            alert('Chat widget clicked! This would open the full chat interface.');
+        }
+    </script>
+</body>
+</html>

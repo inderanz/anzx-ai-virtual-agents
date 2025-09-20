@@ -1,61 +1,48 @@
 # ANZX AI Platform - Production Configuration
-# Project: extreme-gecko-466211-t1
-
 project_id = "extreme-gecko-466211-t1"
 region     = "australia-southeast1"
 zone       = "australia-southeast1-a"
 
-# Domain configuration
-domain_name = "anzx-ai.com"
+# Domain and GitHub configuration
+domain_name  = "anzx.ai"
+github_owner = "anzx-ai"
+github_repo  = "anzx-ai-virtual-agents"
+alert_email  = "admin@anzx.ai"
 
-# GitHub configuration
-github_owner = "your-github-username"
-github_repo  = "anzx-ai-platform"
-
-# Alert configuration
-alert_email = "alerts@anzx-ai.com"
-
-# Database configuration
+# Database configuration (Free tier optimized)
 db_name     = "anzx_ai_platform"
 db_user     = "anzx_user"
-db_password = "your-secure-db-password-here"
-db_tier     = "db-custom-2-8192"
-db_disk_size = 100
+db_password = "AnzxAI2024!SecureDB"
+db_tier     = "db-f1-micro"  # Free tier: 0.6GB RAM, shared CPU
 
-# Redis configuration
-redis_memory_size = 4
+# Redis configuration (Free tier optimized)
+redis_memory_size = 1  # Minimum 1GB for Redis
 
-# GKE configuration (for future blue-green deployments)
-gke_num_nodes    = 3
+# GKE configuration (Free tier optimized)
+gke_num_nodes    = 1  # Start with 1 node for free tier
 gke_min_nodes    = 1
-gke_max_nodes    = 10
-gke_machine_type = "e2-standard-4"
+gke_max_nodes    = 3  # Limit max nodes for cost control
+gke_machine_type = "e2-micro"  # Free tier eligible
 
 # Security configuration
-jwt_secret_key    = "your-jwt-secret-key-here"
-stripe_secret_key = "your-stripe-secret-key-here"
-openai_api_key    = "your-openai-api-key-here"
+jwt_secret_key    = "anzx-ai-jwt-secret-key-2024-production"
+stripe_secret_key = "sk_test_placeholder_for_production"
 vertex_ai_project = "extreme-gecko-466211-t1"
 
-# Environment configuration
-environment = "production"
+# Scaling configuration (Free tier optimized)
+api_min_instances = 0  # Allow scaling to 0 to save costs
+api_max_instances = 10  # Limit max instances for cost control
+api_cpu_limit     = "1000m"  # 1 vCPU limit for free tier
+api_memory_limit  = "2Gi"   # 2GB memory limit for free tier
 
 # Feature flags
+enable_blue_green_deployment = true
+enable_auto_scaling         = true
+enable_ssl                  = true
 enable_monitoring           = true
 enable_backup              = true
-backup_retention_days      = 30
-enable_blue_green_deployment = true
-enable_auto_scaling        = true
-enable_ssl                 = true
-enable_cdn                 = true
 
-# Scaling configuration
-api_min_instances = 2
-api_max_instances = 100
-api_cpu_limit     = "2000m"
-api_memory_limit  = "4Gi"
-
-# Compliance configuration
+# Compliance
 enable_audit_logs           = true
 data_location_restriction   = "australia-southeast1"
 enable_encryption_at_rest   = true

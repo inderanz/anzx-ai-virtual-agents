@@ -26,6 +26,8 @@ class AdminAssistant(BaseAssistant):
     
     async def initialize(self, db: Session) -> Dict[str, Any]:
         """Initialize admin assistant with Agent Space integration"""
+        logger.info(f"Initializing admin assistant with ID: {self.assistant_id}")
+        
         self.capabilities = [
             "communication", "general", "analytics"
         ]

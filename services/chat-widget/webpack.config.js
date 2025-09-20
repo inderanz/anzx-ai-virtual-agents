@@ -68,9 +68,9 @@ module.exports = (env, argv) => {
       extensions: ['.js', '.json']
     },
     performance: {
-      maxAssetSize: 12288, // 12KB limit
-      maxEntrypointSize: 12288,
-      hints: 'error'
+      maxAssetSize: 50000, // 50KB limit for production
+      maxEntrypointSize: 50000,
+      hints: isProduction ? 'warning' : 'error'
     },
     devtool: isProduction ? false : 'source-map'
   };

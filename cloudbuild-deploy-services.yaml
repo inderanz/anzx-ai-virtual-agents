@@ -1,0 +1,278 @@
+# Cloud Build - Deploy Services Only
+# Handles existing infrastructure and deploys/updates services
+
+steps:
+  # Import existing resources into Terraform state
+  - name: 'hashicorp/terraform:1.6'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        cd infrastructure/terraform
+        
+        echo "=== Importing Existing Resources ==="
+        
+        # Load configuration variables
+        export PROJECT_ID=$(grep "id:" ../../config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        export REGION=$(grep "region:" ../../config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        export ZONE=$(grep "zone:" ../../config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        
+        echo "Configuration:"
+        echo "  Project: $PROJECT_ID"
+        echo "  Region: $REGION"
+        echo "  Zone: $ZONE"
+        
+        # Initialize Terraform
+        echo "Initializing Terraform..."
+        terraform init -reconfigure
+        
+        # Create comprehensive terraform.tfvars
+        cat > terraform.tfvars << EOF
+        project_id = "$PROJECT_ID"
+        region = "$REGION"
+        zone = "$ZONE"
+        domain_name = "anzx-ai-platform-$PROJECT_ID.run.app"
+        github_owner = "anzx-ai"
+        github_repo = "anzx-ai-platform"
+        alert_email = "admin@anzx.ai"
+        vertex_ai_project = "$PROJECT_ID"
+        stripe_secret_key = "sk_test_placeholder_key_for_deployment_only"
+        db_name = "anzx_ai_platform"
+        db_user = "anzx_user"
+        db_password = "AnzxAI2024!SecureDB"
+        db_tier = "db-custom-1-3840"
+        db_disk_size = 50
+        redis_memory_size = 2
+        gke_num_nodes = 2
+        gke_min_nodes = 1
+        gke_max_nodes = 5
+        gke_machine_type = "e2-standard-2"
+        api_min_instances = 1
+        api_max_instances = 20
+        api_cpu_limit = "2000m"
+        api_memory_limit = "4Gi"
+        jwt_secret_key = "anzx-ai-jwt-secret-key-2024-production"
+        environment = "production"
+        enable_monitoring = true
+        enable_backup = true
+        backup_retention_days = 30
+        enable_tracing = true
+        enable_metrics = true
+        enable_alerting = true
+        vpc_cidr = "10.0.0.0/16"
+        gke_subnet_cidr = "10.1.0.0/16"
+        db_subnet_cidr = "10.4.0.0/24"
+        enable_blue_green_deployment = false
+        enable_auto_scaling = true
+        enable_ssl = true
+        enable_cdn = false
+        enable_audit_logs = true
+        data_location_restriction = "$REGION"
+        enable_encryption_at_rest = true
+        enable_private_cluster = false
+        EOF
+        
+        # Import existing resources (ignore errors if they don't exist)
+        echo "Importing existing database instance..."
+        terraform import google_sql_database_instance.main $PROJECT_ID/anzx-ai-platform-db || echo "Database instance not found or already imported"
+        
+        echo "Importing existing Cloud Run services..."
+        terraform import google_cloud_run_service.core_api locations/$REGION/namespaces/$PROJECT_ID/services/anzx-ai-platform-core-api || echo "Core API service not found or already imported"
+        terraform import google_cloud_run_service.knowledge_service locations/$REGION/namespaces/$PROJECT_ID/services/anzx-ai-platform-knowledge-service || echo "Knowledge service not found or already imported"
+        
+        echo "✅ Import phase complete"
+    id: 'import-resources'
+
+  # Deploy/Update infrastructure
+  - name: 'hashicorp/terraform:1.6'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        cd infrastructure/terraform
+        
+        echo "=== Deploying Infrastructure ==="
+        
+        # Plan deployment
+        echo "Planning deployment..."
+        terraform plan -detailed-exitcode
+        PLAN_EXIT_CODE=$?
+        
+        if [ $PLAN_EXIT_CODE -eq 0 ]; then
+          echo "✅ No changes needed"
+        elif [ $PLAN_EXIT_CODE -eq 2 ]; then
+          echo "📝 Changes detected, applying..."
+          terraform apply -auto-approve
+        else
+          echo "❌ Plan failed"
+          exit 1
+        fi
+        
+        # Output results
+        echo "=== Deployment Outputs ==="
+        terraform output
+        terraform output -json > /workspace/terraform-outputs.json
+        
+        echo "✅ Infrastructure deployment complete!"
+    id: 'deploy-infrastructure'
+    waitFor: ['import-resources']
+
+  # Wait for services to be ready
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "=== Service Health Checks ==="
+        
+        # Load configuration
+        export PROJECT_ID=$(grep "id:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        export REGION=$(grep "region:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        
+        # Function to wait for service to be ready
+        wait_for_service() {
+          local service_name=$1
+          local max_attempts=20
+          local attempt=1
+          
+          echo "Waiting for $service_name to be ready..."
+          while [ $attempt -le $max_attempts ]; do
+            echo "  Attempt $attempt/$max_attempts..."
+            
+            STATUS=$(gcloud run services describe $service_name --region=$REGION --project=$PROJECT_ID --format="value(status.conditions[0].status)" 2>/dev/null || echo "Unknown")
+            
+            if [ "$STATUS" = "True" ]; then
+              echo "✅ $service_name is ready!"
+              return 0
+            else
+              echo "  ⏳ $service_name status: $STATUS"
+              sleep 15
+              attempt=$((attempt + 1))
+            fi
+          done
+          
+          echo "❌ $service_name failed to become ready"
+          return 1
+        }
+        
+        # Wait for services
+        wait_for_service "anzx-ai-platform-core-api"
+        wait_for_service "anzx-ai-platform-knowledge-service"
+        
+        echo "✅ All services are ready!"
+    id: 'wait-for-services'
+    waitFor: ['deploy-infrastructure']
+
+  # Test endpoints
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "=== Testing Endpoints ==="
+        
+        # Load configuration
+        export PROJECT_ID=$(grep "id:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        export REGION=$(grep "region:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        
+        # Get service URLs
+        API_URL=$(gcloud run services describe anzx-ai-platform-core-api --region=$REGION --project=$PROJECT_ID --format="value(status.url)" 2>/dev/null || echo "")
+        KNOWLEDGE_URL=$(gcloud run services describe anzx-ai-platform-knowledge-service --region=$REGION --project=$PROJECT_ID --format="value(status.url)" 2>/dev/null || echo "")
+        
+        if [ -n "$API_URL" ]; then
+          echo "Testing Core API: $API_URL"
+          
+          # Test health endpoint
+          echo "Testing health endpoint..."
+          if curl -f -s --max-time 30 "$API_URL/health" > /tmp/health_response.json; then
+            echo "✅ Health check passed!"
+            cat /tmp/health_response.json
+          else
+            echo "❌ Health check failed"
+            echo "Checking service logs..."
+            gcloud run services logs read anzx-ai-platform-core-api --region=$REGION --project=$PROJECT_ID --limit=10
+          fi
+          
+          # Test docs endpoint
+          echo "Testing docs endpoint..."
+          if curl -f -s --max-time 30 "$API_URL/docs" > /dev/null; then
+            echo "✅ Docs endpoint accessible!"
+          else
+            echo "⚠️  Docs endpoint not accessible"
+          fi
+          
+        else
+          echo "❌ Core API URL not found"
+        fi
+        
+        if [ -n "$KNOWLEDGE_URL" ]; then
+          echo "Testing Knowledge Service: $KNOWLEDGE_URL"
+          
+          if curl -f -s --max-time 30 "$KNOWLEDGE_URL/health" > /tmp/knowledge_health.json; then
+            echo "✅ Knowledge service health check passed!"
+            cat /tmp/knowledge_health.json
+          else
+            echo "❌ Knowledge service health check failed"
+          fi
+        else
+          echo "❌ Knowledge Service URL not found"
+        fi
+    id: 'test-endpoints'
+    waitFor: ['wait-for-services']
+
+  # Final status report
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "=== Final Deployment Status ==="
+        
+        export PROJECT_ID=$(grep "id:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        export REGION=$(grep "region:" config/deployment-config.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        
+        echo "Project: $PROJECT_ID"
+        echo "Region: $REGION"
+        echo "Build ID: $BUILD_ID"
+        echo "Deployment Time: $(date)"
+        echo ""
+        
+        # Get service URLs for final report
+        API_URL=$(gcloud run services describe anzx-ai-platform-core-api --region=$REGION --project=$PROJECT_ID --format="value(status.url)" 2>/dev/null || echo "Not deployed")
+        KNOWLEDGE_URL=$(gcloud run services describe anzx-ai-platform-knowledge-service --region=$REGION --project=$PROJECT_ID --format="value(status.url)" 2>/dev/null || echo "Not deployed")
+        
+        echo "📊 DEPLOYED SERVICES:"
+        gcloud run services list --region=$REGION --project=$PROJECT_ID --format="table(metadata.name,status.url,status.conditions[0].status)"
+        
+        echo ""
+        echo "🗄️  DATABASE STATUS:"
+        gcloud sql instances list --project=$PROJECT_ID --format="table(name,state,region,databaseVersion)"
+        
+        echo ""
+        if [ "$API_URL" != "Not deployed" ]; then
+          echo "🎉 ================================="
+          echo "🎉 DEPLOYMENT SUCCESSFUL! 🎉"
+          echo "🎉 ================================="
+          echo ""
+          echo "🌐 PUBLIC ENDPOINTS:"
+          echo "  Core API: $API_URL"
+          echo "  Knowledge Service: $KNOWLEDGE_URL"
+          echo "  Health Check: $API_URL/health"
+          echo "  API Docs: $API_URL/docs"
+          echo ""
+          echo "🔗 Quick Test Commands:"
+          echo "curl $API_URL/health"
+          echo "curl $API_URL/assistants"
+        else
+          echo "⚠️  DEPLOYMENT COMPLETED WITH ISSUES"
+          echo "Some services may not have deployed successfully."
+        fi
+    id: 'final-status'
+    waitFor: ['test-endpoints']
+
+# Build options
+options:
+  logging: 'CLOUD_LOGGING_ONLY'
+
+# Build timeout
+timeout: '3600s'  # 1 hour

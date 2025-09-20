@@ -1,298 +1,183 @@
 """
-Google Agent Space built-in connector configuration
-Based on: https://cloud.google.com/agentspace/docs
+Google Connectors Configuration
+Configuration for Google Workspace integrations
 """
 
-import os
-from typing import Dict, Any, List, Optional
-from enum import Enum
+from typing import Dict, Any, List
 
-
-class AgentSpaceConnectorType(Enum):
-    """Agent Space built-in connector types"""
-    GMAIL = "gmail"
-    GOOGLE_CALENDAR = "google_calendar"
-    GOOGLE_DRIVE = "google_drive"
-    GOOGLE_DOCS = "google_docs"
-    GOOGLE_SHEETS = "google_sheets"
-    GOOGLE_WORKSPACE = "google_workspace"
-
-
-class AgentSpaceConnectorConfig:
-    """Configuration for Agent Space built-in connectors"""
-    
-    # OAuth 2.0 Configuration
-    CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
-    CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
-    REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback")
-    
-    # Service Account Configuration
-    SERVICE_ACCOUNT_KEY_PATH: Optional[str] = os.getenv("GOOGLE_SERVICE_ACCOUNT_KEY")
-    SERVICE_ACCOUNT_EMAIL: Optional[str] = os.getenv("GOOGLE_SERVICE_ACCOUNT_EMAIL")
-    DOMAIN_WIDE_DELEGATION: bool = os.getenv("GOOGLE_DOMAIN_WIDE_DELEGATION", "false").lower() == "true"
-    
-    # Agent Space built-in connectors (configured via Agent Builder UI/API)
-    AGENT_SPACE_CONNECTORS: Dict[str, Dict[str, Any]] = {
-        "gmail": {
-            "connector_id": "gmail",
-            "display_name": "Gmail",
-            "description": "Built-in Gmail connector for email operations",
-            "enabled": True,
-            "oauth_required": True,
-            "configuration": {
-                "scopes": [
-                    "https://www.googleapis.com/auth/gmail.readonly",
-                    "https://www.googleapis.com/auth/gmail.send",
-                    "https://www.googleapis.com/auth/gmail.compose"
-                ],
-                "capabilities": [
-                    "read_emails",
-                    "send_emails",
-                    "search_emails",
-                    "manage_drafts"
-                ]
-            }
-        },
-        "google_calendar": {
-            "connector_id": "google_calendar", 
-            "display_name": "Google Calendar",
-            "description": "Built-in Calendar connector for scheduling",
-            "enabled": True,
-            "oauth_required": True,
-            "configuration": {
-                "scopes": [
-                    "https://www.googleapis.com/auth/calendar",
-                    "https://www.googleapis.com/auth/calendar.events"
-                ],
-                "capabilities": [
-                    "create_events",
-                    "read_events",
-                    "update_events",
-                    "delete_events",
-                    "find_free_time"
-                ]
-            }
-        },
-        "google_drive": {
-            "connector_id": "google_drive",
-            "display_name": "Google Drive", 
-            "description": "Built-in Drive connector for file management",
-            "enabled": True,
-            "oauth_required": True,
-            "configuration": {
-                "scopes": [
-                    "https://www.googleapis.com/auth/drive",
-                    "https://www.googleapis.com/auth/drive.file"
-                ],
-                "capabilities": [
-                    "list_files",
-                    "upload_files", 
-                    "download_files",
-                    "share_files",
-                    "create_folders"
-                ]
-            }
-        },
-        "google_workspace": {
-            "connector_id": "google_workspace",
-            "display_name": "Google Workspace",
-            "description": "Built-in Workspace connector for Docs, Sheets, etc.",
-            "enabled": True,
-            "oauth_required": True,
-            "configuration": {
-                "scopes": [
-                    "https://www.googleapis.com/auth/documents",
-                    "https://www.googleapis.com/auth/spreadsheets",
-                    "https://www.googleapis.com/auth/presentations"
-                ],
-                "capabilities": [
-                    "create_documents",
-                    "read_documents",
-                    "update_documents", 
-                    "create_spreadsheets",
-                    "read_spreadsheets",
-                    "update_spreadsheets"
-                ]
-            }
-        }
-    }
-    
-    # Service-specific configurations
-    GMAIL_CONFIG: Dict[str, Any] = {
-        "max_results": 100,
-        "batch_size": 50,
-        "rate_limit_per_minute": 250,  # Gmail API quota
-        "supported_formats": ["text/plain", "text/html"],
-        "attachment_max_size_mb": 25,
-        "auto_reply_enabled": True,
-        "signature_template": "Sent via ANZX AI Platform"
-    }
-    
-    CALENDAR_CONFIG: Dict[str, Any] = {
-        "max_results": 250,
-        "rate_limit_per_minute": 1000,  # Calendar API quota
-        "default_timezone": "Australia/Sydney",
-        "meeting_duration_default": 30,  # minutes
-        "buffer_time_minutes": 15,
-        "working_hours": {
-            "start": "09:00",
-            "end": "17:00",
-            "timezone": "Australia/Sydney"
-        },
-        "auto_accept_meetings": False,
+# Google Calendar Configuration
+GOOGLE_CALENDAR_CONFIG = {
+    "api_version": "v3",
+    "scopes": [
+        "https://www.googleapis.com/auth/calendar",
+        "https://www.googleapis.com/auth/calendar.events"
+    ],
+    "default_calendar": "primary",
+    "timezone": "Australia/Sydney",
+    "working_hours": {
+        "start": "09:00",
+        "end": "17:00",
+        "days": ["monday", "tuesday", "wednesday", "thursday", "friday"]
+    },
+    "meeting_defaults": {
+        "duration_minutes": 60,
+        "buffer_minutes": 15,
+        "location": "Google Meet",
         "send_notifications": True
     }
-    
-    WORKSPACE_CONFIG: Dict[str, Any] = {
-        "drive": {
-            "max_file_size_mb": 100,
-            "supported_mime_types": [
-                "application/pdf",
-                "application/vnd.google-apps.document",
-                "application/vnd.google-apps.spreadsheet",
-                "application/vnd.google-apps.presentation",
-                "text/plain",
-                "application/msword",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            ],
-            "rate_limit_per_minute": 1000
-        },
-        "docs": {
-            "export_format": "text/plain",
-            "include_comments": True,
-            "include_suggestions": False
-        },
-        "sheets": {
-            "max_rows": 10000,
-            "max_columns": 100,
-            "export_format": "text/csv"
-        }
-    }
-    
-    # Connector health check configuration
-    HEALTH_CHECK_CONFIG: Dict[str, Any] = {
-        "check_interval_minutes": 5,
-        "timeout_seconds": 30,
-        "max_retries": 3,
-        "backoff_factor": 2,
-        "alert_on_failure": True,
-        "fallback_enabled": True
-    }
-    
-    # Security and compliance
-    SECURITY_CONFIG: Dict[str, Any] = {
-        "token_encryption_enabled": True,
-        "audit_logging_enabled": True,
-        "data_residency_australia": True,
-        "pii_detection_enabled": True,
-        "content_filtering_enabled": True,
-        "access_logging_enabled": True
-    }
-    
-    # Rate limiting and quotas
-    RATE_LIMITS: Dict[str, Dict[str, int]] = {
-        "gmail": {
-            "requests_per_minute": 250,
-            "requests_per_day": 1000000,
-            "concurrent_requests": 10
-        },
-        "calendar": {
-            "requests_per_minute": 1000,
-            "requests_per_day": 1000000,
-            "concurrent_requests": 20
-        },
-        "workspace": {
-            "requests_per_minute": 1000,
-            "requests_per_day": 20000,
-            "concurrent_requests": 15
-        }
-    }
-    
-    # Error handling and retry configuration
-    RETRY_CONFIG: Dict[str, Any] = {
-        "max_retries": 3,
-        "backoff_factor": 2,
-        "retry_on_status_codes": [429, 500, 502, 503, 504],
-        "timeout_seconds": 30,
-        "circuit_breaker_enabled": True,
-        "circuit_breaker_threshold": 5
-    }
-    
-    # Monitoring and alerting
-    MONITORING_CONFIG: Dict[str, Any] = {
-        "metrics_enabled": True,
-        "performance_tracking": True,
-        "error_tracking": True,
-        "usage_analytics": True,
-        "cost_tracking": True,
-        "alert_thresholds": {
-            "error_rate_percent": 5,
-            "latency_ms": 5000,
-            "quota_usage_percent": 80
-        }
-    }
-    
-    @classmethod
-    def get_service_scopes(cls, services: List[str]) -> List[str]:
-        """Get OAuth scopes for specified services"""
-        scopes = []
-        for service in services:
-            if service in cls.OAUTH_SCOPES:
-                scopes.extend(cls.OAUTH_SCOPES[service])
-        return list(set(scopes))  # Remove duplicates
-    
-    @classmethod
-    def get_service_config(cls, service: str) -> Dict[str, Any]:
-        """Get configuration for specific service"""
-        config_map = {
-            "gmail": cls.GMAIL_CONFIG,
-            "calendar": cls.CALENDAR_CONFIG,
-            "workspace": cls.WORKSPACE_CONFIG
-        }
-        return config_map.get(service, {})
-    
-    @classmethod
-    def get_rate_limit(cls, service: str) -> Dict[str, int]:
-        """Get rate limit configuration for service"""
-        return cls.RATE_LIMITS.get(service, {
-            "requests_per_minute": 100,
-            "requests_per_day": 10000,
-            "concurrent_requests": 5
-        })
-    
-    @classmethod
-    def is_service_enabled(cls, service: str) -> bool:
-        """Check if service is enabled"""
-        return bool(cls.CLIENT_ID and cls.CLIENT_SECRET)
-    
-    @classmethod
-    def validate_configuration(cls) -> Dict[str, Any]:
-        """Validate connector configuration"""
-        issues = []
-        warnings = []
-        
-        # Check required OAuth configuration
-        if not cls.CLIENT_ID:
-            issues.append("GOOGLE_CLIENT_ID not configured")
-        if not cls.CLIENT_SECRET:
-            issues.append("GOOGLE_CLIENT_SECRET not configured")
-        
-        # Check service account configuration
-        if cls.DOMAIN_WIDE_DELEGATION and not cls.SERVICE_ACCOUNT_KEY_PATH:
-            issues.append("Domain-wide delegation enabled but no service account key provided")
-        
-        # Check security configuration
-        if not cls.SECURITY_CONFIG["token_encryption_enabled"]:
-            warnings.append("Token encryption is disabled")
-        if not cls.SECURITY_CONFIG["audit_logging_enabled"]:
-            warnings.append("Audit logging is disabled")
-        
-        return {
-            "valid": len(issues) == 0,
-            "issues": issues,
-            "warnings": warnings
-        }
+}
 
+# Gmail Configuration
+GMAIL_CONFIG = {
+    "api_version": "v1",
+    "scopes": [
+        "https://www.googleapis.com/auth/gmail.send",
+        "https://www.googleapis.com/auth/gmail.compose",
+        "https://www.googleapis.com/auth/gmail.readonly"
+    ],
+    "default_signature": """
+Best regards,
+ANZX AI Assistant
+""",
+    "email_templates": {
+        "meeting_invitation": {
+            "subject": "Meeting Invitation: {title}",
+            "body": """
+Hello {recipient_name},
 
-# Global config instance
-agent_space_connector_config = AgentSpaceConnectorConfig()
+I hope this email finds you well. I would like to invite you to a meeting:
+
+Title: {title}
+Date: {date}
+Time: {time}
+Duration: {duration}
+Location: {location}
+
+Agenda:
+{agenda}
+
+Please let me know if this time works for you.
+
+Best regards,
+{sender_name}
+"""
+        },
+        "follow_up": {
+            "subject": "Follow-up: {subject}",
+            "body": """
+Hello {recipient_name},
+
+I wanted to follow up on our previous conversation regarding {topic}.
+
+{message}
+
+Please let me know if you have any questions or if there's anything else I can help you with.
+
+Best regards,
+{sender_name}
+"""
+        }
+    }
+}
+
+# Google Workspace Configuration
+GOOGLE_WORKSPACE_CONFIG = {
+    "domain": "anzx.ai",
+    "admin_email": "admin@anzx.ai",
+    "default_permissions": {
+        "calendar": ["read", "write"],
+        "gmail": ["send", "compose"],
+        "drive": ["read"]
+    },
+    "oauth_config": {
+        "client_id": "your-client-id",
+        "client_secret": "your-client-secret",
+        "redirect_uri": "https://anzx.ai/auth/google/callback",
+        "scopes": [
+            "https://www.googleapis.com/auth/calendar",
+            "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/drive.readonly"
+        ]
+    }
+}
+
+# Connector Status and Health Check
+CONNECTOR_HEALTH_CONFIG = {
+    "check_interval_seconds": 300,  # 5 minutes
+    "timeout_seconds": 30,
+    "retry_attempts": 3,
+    "failure_threshold": 3,
+    "recovery_threshold": 2
+}
+
+# Rate Limiting Configuration
+RATE_LIMIT_CONFIG = {
+    "calendar": {
+        "requests_per_minute": 100,
+        "requests_per_hour": 1000,
+        "burst_limit": 10
+    },
+    "gmail": {
+        "requests_per_minute": 250,
+        "requests_per_hour": 1000000,
+        "burst_limit": 25
+    },
+    "drive": {
+        "requests_per_minute": 1000,
+        "requests_per_hour": 10000,
+        "burst_limit": 100
+    }
+}
+
+# Error Handling Configuration
+ERROR_HANDLING_CONFIG = {
+    "retry_delays": [1, 2, 4, 8, 16],  # Exponential backoff in seconds
+    "max_retries": 5,
+    "circuit_breaker": {
+        "failure_threshold": 5,
+        "recovery_timeout": 60,
+        "expected_recovery_time": 30
+    },
+    "fallback_responses": {
+        "calendar_unavailable": "I'm unable to access your calendar right now. Please try again later or check your calendar manually.",
+        "gmail_unavailable": "I'm unable to send emails right now. Please try again later or send the email manually.",
+        "general_error": "I'm experiencing technical difficulties with Google services. Please try again in a few minutes."
+    }
+}
+
+def get_connector_config(connector_name: str) -> Dict[str, Any]:
+    """Get configuration for a specific connector"""
+    configs = {
+        "google_calendar": GOOGLE_CALENDAR_CONFIG,
+        "gmail": GMAIL_CONFIG,
+        "google_workspace": GOOGLE_WORKSPACE_CONFIG
+    }
+    return configs.get(connector_name, {})
+
+def get_all_connector_configs() -> Dict[str, Dict[str, Any]]:
+    """Get all connector configurations"""
+    return {
+        "google_calendar": GOOGLE_CALENDAR_CONFIG,
+        "gmail": GMAIL_CONFIG,
+        "google_workspace": GOOGLE_WORKSPACE_CONFIG,
+        "health": CONNECTOR_HEALTH_CONFIG,
+        "rate_limits": RATE_LIMIT_CONFIG,
+        "error_handling": ERROR_HANDLING_CONFIG
+    }
+
+def validate_connector_config(connector_name: str, config: Dict[str, Any]) -> bool:
+    """Validate connector configuration"""
+    required_fields = {
+        "google_calendar": ["api_version", "scopes", "default_calendar"],
+        "gmail": ["api_version", "scopes"],
+        "google_workspace": ["domain", "oauth_config"]
+    }
+    
+    if connector_name not in required_fields:
+        return False
+    
+    for field in required_fields[connector_name]:
+        if field not in config:
+            return False
+    
+    return True
