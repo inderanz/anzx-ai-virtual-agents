@@ -1,5 +1,93 @@
 # ANZx.ai Platform Infrastructure
 
+* Core API (`core-api`):
+       * Purpose: Acts as the central gateway. It handles user authentication, organization management, billing
+         (via Stripe), and routing requests to other backend services.
+       * AI/GCP Services:
+           * Vertex AI (`google-cloud-aiplatform`): Used for general AI capabilities.
+           * Vertex AI Search (`google-cloud-discoveryengine`): Likely used for high-level, managed search over
+             indexed data.
+           * Postgres w/ `pgvector`: Directly interacts with the vector database for tasks that don't require
+             the full knowledge-service.
+           * Cloud Storage: Manages file uploads/downloads.
+
+   * Knowledge Service (`knowledge-service`):
+       * Purpose: This is the heart of the RAG (Retrieval-Augmented Generation) pipeline. Its job is to ingest
+         unstructured data from various sources, process it, and convert it into searchable vector embeddings.
+       * AI/GCP Services:
+           * Document AI (`google-cloud-documentai`): To parse and extract text and structure from complex
+             documents like PDFs and images.
+           * Vertex AI (`google-cloud-aiplatform`): Used to access embedding models (like text-embedding-004)
+             and other AI functionalities.
+           * Sentence-Transformers: A key open-source library used to generate the vector embeddings from text
+             chunks.
+           * Postgres w/ `pgvector`: This is where it stores the final vector embeddings for similarity search.
+       * Other Capabilities: Includes libraries for web scraping (scrapy, selenium) and OCR (pytesseract),
+         indicating it can ingest knowledge from websites and scanned documents.
+
+   * Agent Orchestration (`agent-orchestration`):
+       * Purpose: This service acts as the "brain." It receives a prompt (forwarded from the Core API) and uses
+         an agentic framework to reason, access tools, and generate a final answer.
+       * AI/GCP Services:
+           * Vertex AI (`google-cloud-aiplatform`): Connects to and runs the generative models (e.g., Gemini).
+           * LangGraph & LangChain: These are the core frameworks used to build the agent. LangGraph allows for
+             creating complex, stateful, multi-step flows (e.g., "search knowledge base," "ask clarifying
+             question," "generate final report").
+       * Multi-LLM Support: It notably includes libraries for OpenAI and Anthropic, meaning agents could be
+         configured to use models like GPT-4 or Claude in addition to Google's Gemini models.
+
+         
+Service Configurations & Connections
+
+   1. Chat Widget (`chat-widget`):
+       * Role: The user-facing interface. It's a vanilla JavaScript application that can be embedded on any
+         website.
+       * Connection: It initiates a WebSocket connection to the Core API (/api/chat-widget/ws/{widget_id}) for
+         real-time communication. If WebSockets fail, it falls back to standard HTTP polling to the same API
+         (/api/chat-widget/public/chat). All communication is with the Core API.
+
+   2. Core API (`core-api`):
+       * Role: The central nervous system. It manages authentication, user data, billing, and acts as a secure
+         gateway to the other backend services. It is the only service the user's browser directly communicates
+         with.
+       * Connections:
+           * Receives requests from: The Chat Widget.
+           * Cloud SQL (Postgres): Connects to the database to manage user, organization, and assistant data.
+           * Redis: Used for caching sessions and other ephemeral data.
+           * Agent Orchestration: When a chat message requires an AI-powered response, the Core API forwards
+             the request to the appropriate endpoint on the Agent Orchestration service (e.g.,
+             /orchestrate/support).
+
+   3. Knowledge Service (`knowledge-service`):
+       * Role: The RAG (Retrieval-Augmented Generation) engine. It does not receive requests directly from the
+         user or Core API during a chat. Its primary role is asynchronous document processing.
+       * Connections & AI Usage:
+           * Receives requests from: An administrator or system process that uses its /documents endpoint to
+             upload files.
+           * Cloud Storage: Stores the original uploaded documents (PDFs, etc.) for archival.
+           * `sentence-transformers`: Uses the all-MiniLM-L6-v2 model to convert chunks of text into
+             384-dimension vector embeddings.
+           * Cloud SQL (Postgres w/ `pgvector`): Stores the text chunks and their corresponding vector
+             embeddings in the document_chunks table.
+           * Provides data to: The Agent Orchestration service via its /search endpoint.
+
+   4. Agent Orchestration (`agent-orchestration`):
+       * Role: The "brain" that constructs AI responses. It executes a logical sequence of steps to answer a
+         user's query.
+       * Connections & AI Usage:
+           * Receives requests from: The Core API.
+           * Knowledge Service: It makes an HTTP POST request to the Knowledge Service's /search endpoint,
+             sending the user's query. The Knowledge Service performs a vector similarity search and returns
+             the most relevant text chunks as "context".
+           * Vertex AI (`langchain_google_vertexai`): After retrieving context, it constructs a detailed prompt
+             containing both the original question and the retrieved context. It then sends this prompt to a
+             Google Gemini model (gemini-1.5-pro) via the Vertex AI API to generate a final, context-aware
+             answer.
+           * LangGraph: This framework defines the sequence of operations: retrieve_context ->
+             generate_response -> END.
+
+
+
 This directory contains the Infrastructure as Code (IaC) configuration for the ANZx.ai platform using Terraform and Google Cloud Platform.
 
 ## Architecture Overview

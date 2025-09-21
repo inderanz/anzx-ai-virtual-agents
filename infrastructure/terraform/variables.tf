@@ -1,5 +1,7 @@
 # Terraform Variables for ANZX AI Platform
 
+
+
 variable "project_id" {
   description = "The GCP project ID"
   type        = string
@@ -50,11 +52,7 @@ variable "db_user" {
   default     = "anzx_user"
 }
 
-variable "db_password" {
-  description = "The database password"
-  type        = string
-  sensitive   = true
-}
+
 
 variable "db_tier" {
   description = "The database tier"

@@ -247,35 +247,17 @@ class AgentService:
         channel: str = "api"
     ) -> Dict[str, Any]:
         """
-        Start or continue a conversation with an agent
-        
-        Args:
-            db: Database session
-            assistant_id: Assistant ID
-            organization_id: Organization ID
-            user_message: User's message
-            user_id: User ID (optional for anonymous)
-            conversation_id: Existing conversation ID (optional)
-            channel: Communication channel
-            
-        Returns:
-            Conversation response with agent reply
+        Start or continue a conversation with an agent by calling the orchestration service.
         """
         try:
             # Get assistant
             assistant = await self.get_agent(db, assistant_id, organization_id)
-            
-            # Check usage limits
-            limit_check = await usage_tracker.check_usage_limits(
-                db, organization_id, required_tokens=len(user_message.split()) * 2
-            )
-            
-            if not limit_check["can_proceed"]:
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail="Usage limit exceeded. Please upgrade your plan."
-                )
-            
+
+            # Determine the orchestration endpoint based on agent type
+            orchestration_url = os.getenv("AGENT_ORCHESTRATION_URL", "http://localhost:8001")
+            endpoint = "/orchestrate/support" if assistant.type == "support" else "/orchestrate"
+            full_orchestration_url = f"{orchestration_url}{endpoint}"
+
             # Get or create conversation
             conversation = None
             if conversation_id:
@@ -283,7 +265,7 @@ class AgentService:
                     Conversation.id == conversation_id,
                     Conversation.organization_id == organization_id
                 ).first()
-            
+
             if not conversation:
                 conversation = Conversation(
                     organization_id=organization_id,
@@ -293,8 +275,8 @@ class AgentService:
                     status="active"
                 )
                 db.add(conversation)
-                db.flush()
-            
+                db.flush() # Flush to get the conversation ID
+
             # Create user message record
             user_msg = Message(
                 conversation_id=conversation.id,
@@ -303,91 +285,62 @@ class AgentService:
                 metadata={"channel": channel}
             )
             db.add(user_msg)
-            
-            # Get conversation context
-            context = await self._build_conversation_context(db, conversation.id)
-            
-            # Call Vertex AI agent
-            vertex_agent_id = assistant.model_config["vertex_ai_agent_id"]
-            vertex_response = await self.vertex_ai.start_conversation(
-                agent_id=vertex_agent_id,
-                user_message=user_message,
-                conversation_id=str(conversation.id),
-                context=context
-            )
-            
-            # Calculate usage metrics
-            tokens_input = len(user_message.split())
-            tokens_output = len(vertex_response["reply"].split())
-            cost = usage_tracker.calculate_token_cost(
-                tokens_input, tokens_output, self.config.DEFAULT_MODEL
-            )
-            
+            db.flush() # Flush to get the user message ID
+
+            # Call the Agent Orchestration Service
+            logger.info(f"Calling orchestration service at {full_orchestration_url} for agent {assistant_id}")
+            async with httpx.AsyncClient() as client:
+                orchestration_response = await client.post(
+                    full_orchestration_url,
+                    json={"organization_id": organization_id, "query": user_message},
+                    timeout=60.0
+                )
+                orchestration_response.raise_for_status()
+                orchestration_data = orchestration_response.json()
+
+            agent_reply = orchestration_data.get("response", "")
+            retrieved_context = orchestration_data.get("context", [])
+
             # Create assistant message record
             assistant_msg = Message(
                 conversation_id=conversation.id,
-                content=vertex_response["reply"],
+                content=agent_reply,
                 role="assistant",
-                model=self.config.DEFAULT_MODEL,
-                tokens_input=tokens_input,
-                tokens_output=tokens_output,
-                cost=cost,
-                citations=vertex_response.get("citations", []),
-                metadata={
-                    "vertex_conversation_id": vertex_response["conversation_id"],
-                    "search_results": vertex_response.get("search_results", []),
-                    "confidence_score": vertex_response.get("confidence_score", 0.8)
-                }
+                model=LLM_MODEL_NAME, # Assuming a model name, could be dynamic
+                citations=retrieved_context, # Store the context as citations
+                metadata={"source": "agent-orchestration"}
             )
             db.add(assistant_msg)
-            
+
             # Update conversation metrics
-            conversation.message_count += 2  # User + assistant messages
-            conversation.total_tokens += tokens_input + tokens_output
-            conversation.total_cost += cost
+            conversation.message_count = (conversation.message_count or 0) + 2
             conversation.updated_at = datetime.utcnow()
-            
-            # Update assistant metrics
-            assistant.total_messages += 1
-            assistant.total_conversations = db.query(Conversation).filter(
-                Conversation.assistant_id == assistant_id
-            ).count()
-            
+
             db.commit()
-            
-            # Track usage
-            await usage_tracker.track_ai_interaction(
-                db=db,
-                organization_id=organization_id,
-                tokens_input=tokens_input,
-                tokens_output=tokens_output,
-                cost=cost,
-                model=self.config.DEFAULT_MODEL
-            )
-            
+
             # Prepare response
             response = {
                 "conversation_id": str(conversation.id),
                 "message_id": str(assistant_msg.id),
-                "reply": vertex_response["reply"],
-                "citations": vertex_response.get("citations", []),
-                "search_results": vertex_response.get("search_results", []),
-                "usage": {
-                    "tokens_input": tokens_input,
-                    "tokens_output": tokens_output,
-                    "cost": cost
+                "reply": agent_reply,
+                "citations": retrieved_context,
+                "search_results": [], # This would be populated if orchestrator provided it
+                "usage": { # Usage would need to be tracked differently now
+                    "tokens_input": 0,
+                    "tokens_output": 0,
+                    "cost": 0
                 },
-                "conversation_state": vertex_response.get("conversation_state", "IN_PROGRESS"),
+                "conversation_state": "IN_PROGRESS",
                 "timestamp": datetime.utcnow().isoformat()
             }
-            
+
             logger.info(f"Conversation processed for assistant: {assistant_id}")
             return response
-            
+
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"Failed to process conversation: {e}")
+            logger.error(f"Failed to process conversation: {e}", exc_info=True)
             db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

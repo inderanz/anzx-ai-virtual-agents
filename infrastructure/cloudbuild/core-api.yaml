@@ -7,6 +7,8 @@ steps:
       - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/core-api:${BUILD_ID}'
       - '-t'
       - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/core-api:latest'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/core-api:v1.5'
       - './services/core-api'
     id: 'build-image'
 
@@ -21,11 +23,13 @@ steps:
 
   # Run database migrations
   - name: '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/core-api:${BUILD_ID}'
-    entrypoint: 'python'
-    args: ['-m', 'alembic', 'upgrade', 'head']
-    env:
-      - 'DATABASE_URL=postgresql://anzx_user:$$DB_PASSWORD@$$DB_HOST:5432/anzx_platform'
-    secretEnv: ['DB_PASSWORD', 'DB_HOST']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        export DATABASE_URL="postgresql://anzx_user:$DB_PASSWORD@34.40.163.17:5432/anzx_platform"
+        python -m alembic upgrade head
+    secretEnv: ['DB_PASSWORD']
     id: 'run-migrations'
     waitFor: ['push-image']
 
@@ -86,7 +90,7 @@ artifacts:
 # Secret environment variables
 availableSecrets:
   secretManager:
-    - versionName: projects/${_PROJECT_ID}/secrets/${_ENVIRONMENT}-anzx-db-password/versions/latest
+    - versionName: projects/${_PROJECT_ID}/secrets/cloudsql-app-password-dev/versions/latest
       env: 'DB_PASSWORD'
     - versionName: projects/${_PROJECT_ID}/secrets/${_ENVIRONMENT}-anzx-db-connection-string/versions/latest
       env: 'DB_HOST'
@@ -104,6 +108,6 @@ timeout: '1200s'
 substitutions:
   _ENVIRONMENT: 'dev'
   _REGION: 'australia-southeast1'
-  _PROJECT_ID: 'your-project-id'
-  _REPO_NAME: 'anzx-repo'
-  _SERVICE_NAME: 'dev-anzx-core-api'
+  _PROJECT_ID: 'extreme-gecko-466211-t1'
+  _REPO_NAME: 'anzx-ai-platform-docker'
+  _SERVICE_NAME: 'anzx-ai-platform-core-api'

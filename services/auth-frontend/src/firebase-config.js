@@ -2,10 +2,10 @@
 // You can find this in your Firebase project settings.
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyANoGtItZMEXOQx1NnjysQIqshVlEoyzY0",
-  authDomain: "extreme-gecko-466211-t1.firebaseapp.com",
-  projectId: "extreme-gecko-466211-t1",
-  storageBucket: "extreme-gecko-466211-t1.firebasestorage.app",
-  messagingSenderId: "108810363244",
-  appId: "1:1088103632448:web:b4a454730505180901d9a5"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };

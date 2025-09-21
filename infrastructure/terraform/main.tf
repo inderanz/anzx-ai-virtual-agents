@@ -22,6 +22,11 @@ provider "google" {
   zone    = var.zone
 }
 
+data "google_secret_manager_secret_version" "db_password" {
+  secret  = "anzx-db-password"
+  version = "latest"
+}
+
 locals {
   app_name = "anzx-ai-platform"
   common_labels = {
@@ -135,7 +140,7 @@ resource "google_sql_database" "database" {
 resource "google_sql_user" "user" {
   name     = var.db_user
   instance = google_sql_database_instance.main.name
-  password = var.db_password
+  password = data.google_secret_manager_secret_version.db_password.secret_data
 }
 
 # Redis Instance with private networking
@@ -211,15 +216,9 @@ resource "google_cloud_run_service" "core_api" {
     spec {
       service_account_name = google_service_account.cloud_run_sa.email
       containers {
-        image = "${var.region}-docker.pkg.dev/${var.project_id}/${data.google_artifact_registry_repository.docker_repo.repository_id}/core-api:v1.0.4"
-        
-        ports {
-          container_port = 8000
-        }
-        
         env {
           name  = "DATABASE_URL"
-          value = "postgresql://${google_sql_user.user.name}:${var.db_password}@${google_sql_database_instance.main.public_ip_address}:5432/${google_sql_database.database.name}?sslmode=require"
+          value = "postgresql://${google_sql_user.user.name}:${data.google_secret_manager_secret_version.db_password.secret_data}@${google_sql_database_instance.main.public_ip_address}:5432/${google_sql_database.database.name}?sslmode=require"
         }
         
         env {
@@ -302,7 +301,7 @@ resource "google_cloud_run_service" "knowledge_service" {
         
         env {
           name  = "DATABASE_URL"
-          value = "postgresql://${google_sql_user.user.name}:${var.db_password}@${google_sql_database_instance.main.public_ip_address}:5432/${google_sql_database.database.name}?sslmode=require"
+          value = "postgresql://${google_sql_user.user.name}:${data.google_secret_manager_secret_version.db_password.secret_data}@${google_sql_database_instance.main.public_ip_address}:5432/${google_sql_database.database.name}?sslmode=require"
         }
         
         env {
@@ -387,6 +386,85 @@ resource "google_storage_bucket" "assets" {
 # Secrets will be managed separately - using variables directly for now
 
 # Secret versions will be created manually or via separate process to avoid permission issues
+
+# Cloud Run service for Agent Orchestration
+resource "google_cloud_run_service" "agent_orchestration" {
+  name     = "anzx-ai-platform-agent-orch"
+  location = var.region
+
+  template {
+    spec {
+      service_account_name = google_service_account.cloud_run_sa.email
+      containers {
+        image = "${var.region}-docker.pkg.dev/${var.project_id}/${data.google_artifact_registry_repository.docker_repo.repository_id}/agent-orchestration:latest"
+
+        ports {
+          container_port = 8001
+        }
+
+        env {
+          name  = "KNOWLEDGE_SERVICE_URL"
+          value = google_cloud_run_service.knowledge_service.status[0].url
+        }
+        env {
+          name  = "VERTEX_AI_PROJECT"
+          value = var.project_id
+        }
+        env {
+          name  = "VERTEX_AI_LOCATION"
+          value = var.region
+        }
+      }
+    }
+  }
+
+  traffic {
+    percent         = 100
+    latest_revision = true
+  }
+
+  depends_on = [
+    google_cloud_run_service.knowledge_service
+  ]
+}
+
+# Cloud Run service for Chat Widget
+resource "google_cloud_run_service" "chat_widget" {
+  name     = "anzx-ai-platform-chat-widget"
+  location = var.region
+
+  template {
+    spec {
+      containers {
+        image = "${var.region}-docker.pkg.dev/${var.project_id}/${data.google_artifact_registry_repository.docker_repo.repository_id}/chat-widget:latest"
+        ports {
+          container_port = 80
+        }
+      }
+    }
+  }
+
+  traffic {
+    percent         = 100
+    latest_revision = true
+  }
+}
+
+# IAM for new Cloud Run services (public access)
+resource "google_cloud_run_service_iam_member" "agent_orchestration_public" {
+  service  = google_cloud_run_service.agent_orchestration.name
+  location = google_cloud_run_service.agent_orchestration.location
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
+resource "google_cloud_run_service_iam_member" "chat_widget_public" {
+  service  = google_cloud_run_service.chat_widget.name
+  location = google_cloud_run_service.chat_widget.location
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
 
 # Outputs
 output "core_api_url" {

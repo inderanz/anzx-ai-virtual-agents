@@ -22,13 +22,20 @@ steps:
         gcloud artifacts docker images list $$REGION-docker.pkg.dev/$$PROJECT_ID/anzx-ai-platform-docker --format="table(IMAGE,TAGS,CREATE_TIME)"
         
         # Verify core images exist
-        CORE_API_EXISTS=$(gcloud artifacts docker images list $$REGION-docker.pkg.dev/$$PROJECT_ID/anzx-ai-platform-docker --filter="IMAGE~core-api" --format="value(IMAGE)" | wc -l)
-        KNOWLEDGE_EXISTS=$(gcloud artifacts docker images list $$REGION-docker.pkg.dev/$$PROJECT_ID/anzx-ai-platform-docker --filter="IMAGE~knowledge-service" --format="value(IMAGE)" | wc -l)
+        CORE_API_EXISTS=$(gcloud artifacts docker images list $REGION-docker.pkg.dev/$PROJECT_ID/anzx-ai-platform-docker --filter="IMAGE~core-api" --format="value(IMAGE)" | wc -l)
+        KNOWLEDGE_EXISTS=$(gcloud artifacts docker images list $REGION-docker.pkg.dev/$PROJECT_ID/anzx-ai-platform-docker --filter="IMAGE~knowledge-service" --format="value(IMAGE)" | wc -l)
+        AGENT_ORCH_EXISTS=$(gcloud artifacts docker images list $REGION-docker.pkg.dev/$PROJECT_ID/anzx-ai-platform-docker --filter="IMAGE~agent-orchestration" --format="value(IMAGE)" | wc -l)
+        CHAT_WIDGET_EXISTS=$(gcloud artifacts docker images list $REGION-docker.pkg.dev/$PROJECT_ID/anzx-ai-platform-docker --filter="IMAGE~chat-widget" --format="value(IMAGE)" | wc -l)
         
-        if [ "$$CORE_API_EXISTS" -gt 0 ] && [ "$$KNOWLEDGE_EXISTS" -gt 0 ]; then
+        if [ "$CORE_API_EXISTS" -gt 0 ] && [ "$KNOWLEDGE_EXISTS" -gt 0 ] && [ "$AGENT_ORCH_EXISTS" -gt 0 ] && [ "$CHAT_WIDGET_EXISTS" -gt 0 ]; then
           echo "✅ Required images found - proceeding with infrastructure deployment"
         else
           echo "❌ Required images not found"
+          echo "Missing images:"
+          [ "$CORE_API_EXISTS" -eq 0 ] && echo "  - core-api"
+          [ "$KNOWLEDGE_EXISTS" -eq 0 ] && echo "  - knowledge-service"
+          [ "$AGENT_ORCH_EXISTS" -eq 0 ] && echo "  - agent-orchestration"
+          [ "$CHAT_WIDGET_EXISTS" -eq 0 ] && echo "  - chat-widget"
           exit 1
         fi
     id: 'validate-images'
@@ -62,8 +69,13 @@ steps:
         echo "Initializing Terraform..."
         terraform init -reconfigure
         
+        # IMPORTANT: The Cloud Build service account needs 'Cloud Run Admin' and 'Service Account User' roles for this to work.
         # Remove problematic resources from state (Terraform 1.6 compatible approach)
         echo "Cleaning up problematic state resources..."
+        terraform state rm google_cloud_run_service.core_api 2>/dev/null || true
+        terraform state rm google_cloud_run_service.knowledge_service 2>/dev/null || true
+        terraform state rm google_cloud_run_service.agent_orchestration 2>/dev/null || true
+        terraform state rm google_cloud_run_service.chat_widget 2>/dev/null || true
         terraform state rm google_secret_manager_secret_version.db_password 2>/dev/null || true
         terraform state rm google_secret_manager_secret_version.jwt_secret 2>/dev/null || true
         
@@ -79,8 +91,9 @@ steps:
         github_owner = "anzx-ai"
         github_repo = "anzx-ai-platform"
         alert_email = "admin@anzx.ai"
-        vertex_ai_project = "$$PROJECT_ID"
+        vertex_ai_project = "$PROJECT_ID"
         stripe_secret_key = "sk_test_placeholder_key_for_deployment_only"
+        firebase_token = "placeholder-firebase-token-for-deployment"
         
         # Database configuration (Production ready, small instance)
         db_name = "anzx_ai_platform"
