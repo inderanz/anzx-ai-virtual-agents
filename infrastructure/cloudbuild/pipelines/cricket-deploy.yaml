@@ -63,6 +63,8 @@ steps:
       - 'APP_ENV=prod,GCP_PROJECT=${_PROJECT_ID},REGION=${_REGION},VERTEX_LOCATION=${_REGION},VERTEX_MODEL=gemini-1.5-flash,EMBED_MODEL=text-embedding-005,PLAYHQ_MODE=public,VECTOR_BACKEND=vertex_rag'
       - '--set-secrets'
       - 'SECRET_PLAYHQ_API_KEY=SECRET_PLAYHQ_API_KEY:latest,SECRET_IDS_BUNDLE=CSCC_IDS:latest,SECRET_INTERNAL_TOKEN=CRICKET_INTERNAL_TOKEN:latest'
+      - '--memory'
+      - '1Gi'
     waitFor: ['push-cricket-agent']
 
   # Skip Cricket Bridge - already deployed and running
