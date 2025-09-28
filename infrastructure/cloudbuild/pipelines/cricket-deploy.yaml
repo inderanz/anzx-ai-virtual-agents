@@ -1,41 +1,41 @@
 # Cloud Build Pipeline for Cricket Services Deployment
 # Deploys cricket-agent and cricket-bridge services
 
-        steps:
-          # Check if Cricket Agent image already exists
-          - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
-            id: 'check-cricket-agent-image'
-            entrypoint: 'bash'
-            args:
-              - '-c'
-              - |
-                set -euo pipefail
-                IMAGE_NAME="${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:${BUILD_ID}"
-                if gcloud artifacts docker images describe $IMAGE_NAME >/dev/null 2>&1; then
-                  echo "Cricket Agent image $IMAGE_NAME already exists, skipping build"
-                  echo '{"action": "check_image", "status": "exists", "image": "'$IMAGE_NAME'"}'
-                else
-                  echo "Cricket Agent image $IMAGE_NAME not found, will build"
-                  echo '{"action": "check_image", "status": "not_found", "image": "'$IMAGE_NAME'"}'
-                fi
-            waitFor: ['-']
+steps:
+  # Check if Cricket Agent image already exists
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'check-cricket-agent-image'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        IMAGE_NAME="${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:${BUILD_ID}"
+        if gcloud artifacts docker images describe $IMAGE_NAME >/dev/null 2>&1; then
+          echo "Cricket Agent image $IMAGE_NAME already exists, skipping build"
+          echo '{"action": "check_image", "status": "exists", "image": "'$IMAGE_NAME'"}'
+        else
+          echo "Cricket Agent image $IMAGE_NAME not found, will build"
+          echo '{"action": "check_image", "status": "not_found", "image": "'$IMAGE_NAME'"}'
+        fi
+    waitFor: ['-']
 
-          # Build and Deploy Cricket Agent (only if image doesn't exist)
-          - name: 'gcr.io/cloud-builders/docker'
-            id: 'build-cricket-agent'
-            entrypoint: 'bash'
-            args:
-              - '-c'
-              - |
-                set -euo pipefail
-                IMAGE_NAME="${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:${BUILD_ID}"
-                if gcloud artifacts docker images describe $IMAGE_NAME >/dev/null 2>&1; then
-                  echo "Skipping build - image already exists: $IMAGE_NAME"
-                  exit 0
-                fi
-                echo "Building Cricket Agent image: $IMAGE_NAME"
-                docker build -t $IMAGE_NAME -t ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:latest services/cricket-agent
-            waitFor: ['check-cricket-agent-image']
+  # Build and Deploy Cricket Agent (only if image doesn't exist)
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-cricket-agent'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        IMAGE_NAME="${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:${BUILD_ID}"
+        if gcloud artifacts docker images describe $IMAGE_NAME >/dev/null 2>&1; then
+          echo "Skipping build - image already exists: $IMAGE_NAME"
+          exit 0
+        fi
+        echo "Building Cricket Agent image: $IMAGE_NAME"
+        docker build -t $IMAGE_NAME -t ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:latest services/cricket-agent
+    waitFor: ['check-cricket-agent-image']
 
   - name: 'gcr.io/cloud-builders/docker'
     id: 'push-cricket-agent'
@@ -67,40 +67,40 @@
       - 'SECRET_PLAYHQ_API_KEY=projects/${_PROJECT_ID}/secrets/PLAYHQ_X_API_KEY/versions/latest,SECRET_IDS_BUNDLE=projects/${_PROJECT_ID}/secrets/CSCC_IDS/versions/latest,SECRET_INTERNAL_TOKEN=projects/${_PROJECT_ID}/secrets/CRICKET_INTERNAL_TOKEN/versions/latest'
     waitFor: ['push-cricket-agent']
 
-          # Check if Cricket Bridge image already exists
-          - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
-            id: 'check-cricket-bridge-image'
-            entrypoint: 'bash'
-            args:
-              - '-c'
-              - |
-                set -euo pipefail
-                IMAGE_NAME="${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:${BUILD_ID}"
-                if gcloud artifacts docker images describe $IMAGE_NAME >/dev/null 2>&1; then
-                  echo "Cricket Bridge image $IMAGE_NAME already exists, skipping build"
-                  echo '{"action": "check_image", "status": "exists", "image": "'$IMAGE_NAME'"}'
-                else
-                  echo "Cricket Bridge image $IMAGE_NAME not found, will build"
-                  echo '{"action": "check_image", "status": "not_found", "image": "'$IMAGE_NAME'"}'
-                fi
-            waitFor: ['-']
+  # Check if Cricket Bridge image already exists
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'check-cricket-bridge-image'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        IMAGE_NAME="${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:${BUILD_ID}"
+        if gcloud artifacts docker images describe $IMAGE_NAME >/dev/null 2>&1; then
+          echo "Cricket Bridge image $IMAGE_NAME already exists, skipping build"
+          echo '{"action": "check_image", "status": "exists", "image": "'$IMAGE_NAME'"}'
+        else
+          echo "Cricket Bridge image $IMAGE_NAME not found, will build"
+          echo '{"action": "check_image", "status": "not_found", "image": "'$IMAGE_NAME'"}'
+        fi
+    waitFor: ['-']
 
-          # Build and Deploy Cricket Bridge (only if image doesn't exist)
-          - name: 'gcr.io/cloud-builders/docker'
-            id: 'build-cricket-bridge'
-            entrypoint: 'bash'
-            args:
-              - '-c'
-              - |
-                set -euo pipefail
-                IMAGE_NAME="${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:${BUILD_ID}"
-                if gcloud artifacts docker images describe $IMAGE_NAME >/dev/null 2>&1; then
-                  echo "Skipping build - image already exists: $IMAGE_NAME"
-                  exit 0
-                fi
-                echo "Building Cricket Bridge image: $IMAGE_NAME"
-                docker build -t $IMAGE_NAME -t ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:latest services/cricket-bridge
-            waitFor: ['check-cricket-bridge-image']
+  # Build and Deploy Cricket Bridge (only if image doesn't exist)
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-cricket-bridge'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        IMAGE_NAME="${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:${BUILD_ID}"
+        if gcloud artifacts docker images describe $IMAGE_NAME >/dev/null 2>&1; then
+          echo "Skipping build - image already exists: $IMAGE_NAME"
+          exit 0
+        fi
+        echo "Building Cricket Bridge image: $IMAGE_NAME"
+        docker build -t $IMAGE_NAME -t ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:latest services/cricket-bridge
+    waitFor: ['check-cricket-bridge-image']
 
   - name: 'gcr.io/cloud-builders/docker'
     id: 'push-cricket-bridge'
