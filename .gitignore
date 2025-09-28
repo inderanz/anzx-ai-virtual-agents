@@ -119,6 +119,7 @@ dmypy.json
 .gcloud/
 service-account-key.json
 *.json
+!package*.json
 
 # Terraform
 *.tfstate
