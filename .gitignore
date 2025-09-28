@@ -120,6 +120,7 @@ dmypy.json
 service-account-key.json
 *.json
 !package*.json
+!tsconfig.json
 
 # Terraform
 *.tfstate
