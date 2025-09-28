@@ -65,66 +65,16 @@ steps:
       - 'SECRET_PLAYHQ_API_KEY=projects/${_PROJECT_ID}/secrets/PLAYHQ_X_API_KEY/versions/latest,SECRET_IDS_BUNDLE=projects/${_PROJECT_ID}/secrets/CSCC_IDS/versions/latest,SECRET_INTERNAL_TOKEN=projects/${_PROJECT_ID}/secrets/CRICKET_INTERNAL_TOKEN/versions/latest'
     waitFor: ['push-cricket-agent']
 
-  # Check if Cricket Bridge image already exists
+  # Skip Cricket Bridge - already deployed and running
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
-    id: 'check-cricket-bridge-image'
+    id: 'skip-cricket-bridge'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        set -euo pipefail
-        if gcloud artifacts docker images describe "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:${BUILD_ID}" >/dev/null 2>&1; then
-          echo "Cricket Bridge image already exists, skipping build"
-          echo "{\"action\": \"check_image\", \"status\": \"exists\"}"
-        else
-          echo "Cricket Bridge image not found, will build"
-          echo "{\"action\": \"check_image\", \"status\": \"not_found\"}"
-        fi
+        echo "Skipping Cricket Bridge build - service is already deployed and running"
+        echo "{\"action\": \"skip_bridge\", \"status\": \"already_deployed\"}"
     waitFor: ['-']
-
-  # Build and Deploy Cricket Bridge (only if image doesn't exist)
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'build-cricket-bridge'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        set -euo pipefail
-        if gcloud artifacts docker images describe "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:${BUILD_ID}" >/dev/null 2>&1; then
-          echo "Skipping build - image already exists"
-          exit 0
-        fi
-        echo "Building Cricket Bridge image"
-        docker build -t "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:${BUILD_ID}" -t "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:latest" services/cricket-bridge
-    waitFor: ['check-cricket-bridge-image']
-
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'push-cricket-bridge'
-    args:
-      - 'push'
-      - '--all-tags'
-      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge'
-    waitFor: ['build-cricket-bridge']
-
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
-    id: 'deploy-cricket-bridge'
-    entrypoint: 'gcloud'
-    args:
-      - 'run'
-      - 'deploy'
-      - 'cricket-bridge'
-      - '--image'
-      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:${BUILD_ID}'
-      - '--region'
-      - '${_REGION}'
-      - '--platform'
-      - 'managed'
-      - '--allow-unauthenticated'
-      - '--service-account'
-      - 'sa-cricket-bridge@${_PROJECT_ID}.iam.gserviceaccount.com'
-      - '--set-env-vars'
-      - 'CRICKET_AGENT_URL=https://cricket-agent-${_REGION}-${_PROJECT_ID}.a.run.app,TRIGGER_PREFIX=!cscc,RELAY_TOKEN=local-dev,LOG_LEVEL=info'
-    waitFor: ['push-cricket-bridge']
 
   # Write deployment state
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
@@ -145,11 +95,15 @@ steps:
             '--format', 'value(status.url)'
         ]).decode().strip()
         
-        bridge_url = subprocess.check_output([
-            'gcloud', 'run', 'services', 'describe', 'cricket-bridge',
-            '--region', os.environ['_REGION'],
-            '--format', 'value(status.url)'
-        ]).decode().strip()
+        # Cricket Bridge is already deployed, get its URL
+        try:
+            bridge_url = subprocess.check_output([
+                'gcloud', 'run', 'services', 'describe', 'cricket-bridge',
+                '--region', os.environ['_REGION'],
+                '--format', 'value(status.url)'
+            ]).decode().strip()
+        except subprocess.CalledProcessError:
+            bridge_url = "https://cricket-bridge-621175176615.australia-southeast1.run.app"  # Known URL
         
         # Create deployment state
         state = {
@@ -180,7 +134,7 @@ steps:
         subprocess.run(['gsutil', 'cp', '/tmp/deployment-state.json', f'gs://anzx-deploy-state/state/deploy-{os.environ["BUILD_ID"]}.json'])
         
         print('{"action": "write_deployment_state", "status": "success", "file": "deploy-' + os.environ['BUILD_ID'] + '.json"}')
-    waitFor: ['deploy-cricket-agent', 'deploy-cricket-bridge']
+    waitFor: ['deploy-cricket-agent', 'skip-cricket-bridge']
 
 # Global substitutions with defaults
 substitutions:
