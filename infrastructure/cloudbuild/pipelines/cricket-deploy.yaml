@@ -10,13 +10,12 @@ steps:
       - '-c'
       - |
         set -euo pipefail
-        AGENT_IMG="${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:${BUILD_ID}"
-        if gcloud artifacts docker images describe "$AGENT_IMG" >/dev/null 2>&1; then
-          echo "Cricket Agent image $AGENT_IMG already exists, skipping build"
-          echo "{\"action\": \"check_image\", \"status\": \"exists\", \"image\": \"$AGENT_IMG\"}"
+        if gcloud artifacts docker images describe "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:${BUILD_ID}" >/dev/null 2>&1; then
+          echo "Cricket Agent image already exists, skipping build"
+          echo "{\"action\": \"check_image\", \"status\": \"exists\"}"
         else
-          echo "Cricket Agent image $AGENT_IMG not found, will build"
-          echo "{\"action\": \"check_image\", \"status\": \"not_found\", \"image\": \"$AGENT_IMG\"}"
+          echo "Cricket Agent image not found, will build"
+          echo "{\"action\": \"check_image\", \"status\": \"not_found\"}"
         fi
     waitFor: ['-']
 
@@ -28,13 +27,12 @@ steps:
       - '-c'
       - |
         set -euo pipefail
-        AGENT_IMG="${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:${BUILD_ID}"
-        if gcloud artifacts docker images describe "$AGENT_IMG" >/dev/null 2>&1; then
-          echo "Skipping build - image already exists: $AGENT_IMG"
+        if gcloud artifacts docker images describe "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:${BUILD_ID}" >/dev/null 2>&1; then
+          echo "Skipping build - image already exists"
           exit 0
         fi
-        echo "Building Cricket Agent image: $AGENT_IMG"
-        docker build -t "$AGENT_IMG" -t "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:latest" services/cricket-agent
+        echo "Building Cricket Agent image"
+        docker build -t "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:${BUILD_ID}" -t "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:latest" services/cricket-agent
     waitFor: ['check-cricket-agent-image']
 
   - name: 'gcr.io/cloud-builders/docker'
@@ -75,13 +73,12 @@ steps:
       - '-c'
       - |
         set -euo pipefail
-        BRIDGE_IMG="${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:${BUILD_ID}"
-        if gcloud artifacts docker images describe "$BRIDGE_IMG" >/dev/null 2>&1; then
-          echo "Cricket Bridge image $BRIDGE_IMG already exists, skipping build"
-          echo "{\"action\": \"check_image\", \"status\": \"exists\", \"image\": \"$BRIDGE_IMG\"}"
+        if gcloud artifacts docker images describe "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:${BUILD_ID}" >/dev/null 2>&1; then
+          echo "Cricket Bridge image already exists, skipping build"
+          echo "{\"action\": \"check_image\", \"status\": \"exists\"}"
         else
-          echo "Cricket Bridge image $BRIDGE_IMG not found, will build"
-          echo "{\"action\": \"check_image\", \"status\": \"not_found\", \"image\": \"$BRIDGE_IMG\"}"
+          echo "Cricket Bridge image not found, will build"
+          echo "{\"action\": \"check_image\", \"status\": \"not_found\"}"
         fi
     waitFor: ['-']
 
@@ -93,13 +90,12 @@ steps:
       - '-c'
       - |
         set -euo pipefail
-        BRIDGE_IMG="${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:${BUILD_ID}"
-        if gcloud artifacts docker images describe "$BRIDGE_IMG" >/dev/null 2>&1; then
-          echo "Skipping build - image already exists: $BRIDGE_IMG"
+        if gcloud artifacts docker images describe "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:${BUILD_ID}" >/dev/null 2>&1; then
+          echo "Skipping build - image already exists"
           exit 0
         fi
-        echo "Building Cricket Bridge image: $BRIDGE_IMG"
-        docker build -t "$BRIDGE_IMG" -t "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:latest" services/cricket-bridge
+        echo "Building Cricket Bridge image"
+        docker build -t "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:${BUILD_ID}" -t "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:latest" services/cricket-bridge
     waitFor: ['check-cricket-bridge-image']
 
   - name: 'gcr.io/cloud-builders/docker'
