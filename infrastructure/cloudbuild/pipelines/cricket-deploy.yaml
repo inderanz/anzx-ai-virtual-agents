@@ -81,7 +81,7 @@ steps:
       - '--service-account'
       - 'sa-cricket-bridge@${_PROJECT_ID}.iam.gserviceaccount.com'
       - '--set-env-vars'
-      - 'PORT=8003,CRICKET_AGENT_URL=https://cricket-agent-${_REGION}-${_PROJECT_ID}.a.run.app,TRIGGER_PREFIX=!cscc,RELAY_TOKEN=local-dev,LOG_LEVEL=info'
+      - 'CRICKET_AGENT_URL=https://cricket-agent-${_REGION}-${_PROJECT_ID}.a.run.app,TRIGGER_PREFIX=!cscc,RELAY_TOKEN=local-dev,LOG_LEVEL=info'
     waitFor: ['push-cricket-bridge']
 
   # Write deployment state
