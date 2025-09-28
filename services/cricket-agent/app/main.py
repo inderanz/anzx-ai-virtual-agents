@@ -56,7 +56,7 @@ async def lifespan(app: FastAPI):
     try:
         # Initialize services
         settings = get_settings()
-        logger.info(f"Configuration loaded: {settings.environment}")
+        logger.info(f"Configuration loaded: {settings.app_env}")
         
         # Initialize PlayHQ client
         # TODO: Initialize PlayHQ client with credentials
