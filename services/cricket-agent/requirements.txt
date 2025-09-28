@@ -2,23 +2,23 @@
 # Following requirements.md specifications
 
 # FastAPI and ASGI
-fastapi==0.95.2
+fastapi>=0.104.0
 uvicorn[standard]==0.24.0
 python-multipart==0.0.6
 
-# Google Cloud AI Platform (ADK & Agent Engine)
-google-cloud-aiplatform[adk,agent_engine]>=1.112.0,<2.0
+# Google Cloud AI Platform (ADK)
+google-cloud-aiplatform[adk]>=1.112.0,<2.0
 google-cloud-secret-manager>=2.20.0
 google-cloud-logging>=3.10.0
-google-cloud-matching-engine>=0.1.0
+# google-cloud-matching-engine is included in google-cloud-aiplatform
 google-cloud-storage>=2.10.0
-google-cloud-error-reporting>=3.0.0
+google-cloud-error-reporting>=1.12.0
 
 # OpenTelemetry Observability
 opentelemetry-api>=1.20.0
 opentelemetry-sdk>=1.20.0
-opentelemetry-exporter-cloud-monitoring>=1.0.0
-opentelemetry-exporter-cloud-trace>=1.0.0
+opentelemetry-exporter-cloud-monitoring>=0.10b1
+opentelemetry-exporter-cloud-trace>=0.10b1
 opentelemetry-instrumentation-fastapi>=0.42b0
 opentelemetry-instrumentation-httpx>=0.42b0
 opentelemetry-instrumentation-requests>=0.42b0
