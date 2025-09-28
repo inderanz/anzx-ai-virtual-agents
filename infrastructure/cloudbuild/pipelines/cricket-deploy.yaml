@@ -1,0 +1,153 @@
+# Cloud Build Pipeline for Cricket Services Deployment
+# Deploys cricket-agent and cricket-bridge services
+
+steps:
+  # Build and Deploy Cricket Agent
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-cricket-agent'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:${BUILD_ID}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:latest'
+      - 'services/cricket-agent'
+    waitFor: ['-']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-cricket-agent'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent'
+    waitFor: ['build-cricket-agent']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'deploy-cricket-agent'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'cricket-agent'
+      - '--image'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:${BUILD_ID}'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--service-account'
+      - 'sa-cricket-agent@${_PROJECT_ID}.iam.gserviceaccount.com'
+      - '--set-env-vars'
+      - 'APP_ENV=prod,PORT=8080,GCP_PROJECT=${_PROJECT_ID},REGION=${_REGION},VERTEX_LOCATION=${_REGION},VERTEX_MODEL=gemini-1.5-flash,EMBED_MODEL=text-embedding-005,PLAYHQ_MODE=public,VECTOR_BACKEND=vertex_rag'
+      - '--set-secrets'
+      - 'SECRET_PLAYHQ_API_KEY=projects/${_PROJECT_ID}/secrets/PLAYHQ_X_API_KEY/versions/latest,SECRET_IDS_BUNDLE=projects/${_PROJECT_ID}/secrets/CSCC_IDS/versions/latest,SECRET_INTERNAL_TOKEN=projects/${_PROJECT_ID}/secrets/CRICKET_INTERNAL_TOKEN/versions/latest'
+    waitFor: ['push-cricket-agent']
+
+  # Build and Deploy Cricket Bridge
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-cricket-bridge'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:${BUILD_ID}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:latest'
+      - 'services/cricket-bridge'
+    waitFor: ['-']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-cricket-bridge'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge'
+    waitFor: ['build-cricket-bridge']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'deploy-cricket-bridge'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'cricket-bridge'
+      - '--image'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:${BUILD_ID}'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--service-account'
+      - 'sa-cricket-bridge@${_PROJECT_ID}.iam.gserviceaccount.com'
+      - '--set-env-vars'
+      - 'PORT=8003,CRICKET_AGENT_URL=https://cricket-agent-${_REGION}-${_PROJECT_ID}.a.run.app,TRIGGER_PREFIX=!cscc,RELAY_TOKEN=local-dev,LOG_LEVEL=info'
+    waitFor: ['push-cricket-bridge']
+
+  # Write deployment state
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'write-deployment-state'
+    entrypoint: 'python3'
+    args:
+      - '-c'
+      - |
+        import json
+        import subprocess
+        import os
+        from datetime import datetime
+        
+        # Get service URLs
+        agent_url = subprocess.check_output([
+            'gcloud', 'run', 'services', 'describe', 'cricket-agent',
+            '--region', os.environ['_REGION'],
+            '--format', 'value(status.url)'
+        ]).decode().strip()
+        
+        bridge_url = subprocess.check_output([
+            'gcloud', 'run', 'services', 'describe', 'cricket-bridge',
+            '--region', os.environ['_REGION'],
+            '--format', 'value(status.url)'
+        ]).decode().strip()
+        
+        # Create deployment state
+        state = {
+            "deployment": {
+                "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                "build_id": os.environ['BUILD_ID'],
+                "short_sha": os.environ['BUILD_ID'],
+                "project_id": os.environ['_PROJECT_ID'],
+                "region": os.environ['_REGION'],
+                "services": {
+                    "cricket-agent": {
+                        "url": agent_url,
+                        "image": f"{os.environ['_REGION']}-docker.pkg.dev/{os.environ['_PROJECT_ID']}/{os.environ['_ARTIFACT_REPO']}/cricket-agent:{os.environ['BUILD_ID']}"
+                    },
+                    "cricket-bridge": {
+                        "url": bridge_url,
+                        "image": f"{os.environ['_REGION']}-docker.pkg.dev/{os.environ['_PROJECT_ID']}/{os.environ['_ARTIFACT_REPO']}/cricket-bridge:{os.environ['BUILD_ID']}"
+                    }
+                }
+            }
+        }
+        
+        # Write to file
+        with open('/tmp/deployment-state.json', 'w') as f:
+            json.dump(state, f, indent=2)
+        
+        # Upload to GCS
+        subprocess.run(['gsutil', 'cp', '/tmp/deployment-state.json', f'gs://anzx-deploy-state/state/deploy-{os.environ["BUILD_ID"]}.json'])
+        
+        print('{"action": "write_deployment_state", "status": "success", "file": "deploy-' + os.environ['BUILD_ID'] + '.json"}')
+    waitFor: ['deploy-cricket-agent', 'deploy-cricket-bridge']
+
+# Global substitutions with defaults
+substitutions:
+  _PROJECT_ID: 'virtual-stratum-473511-u5'
+  _REGION: 'australia-southeast1'
+  _ARTIFACT_REPO: 'anzx-agents'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  substitutionOption: 'ALLOW_LOOSE'
+
+timeout: '1800s'  # 30 minutes
