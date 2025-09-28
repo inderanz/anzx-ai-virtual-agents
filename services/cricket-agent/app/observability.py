@@ -17,7 +17,10 @@ except ImportError:
     error_reporting = None
 from opentelemetry import trace
 from opentelemetry import metrics
-from opentelemetry.exporter.cloud_monitoring import CloudMonitoringMetricsExporter
+try:
+    from opentelemetry.exporter.cloud_monitoring import CloudMonitoringMetricsExporter
+except ImportError:
+    CloudMonitoringMetricsExporter = None
 from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -394,11 +397,16 @@ def _setup_telemetry():
         span_processor = BatchSpanProcessor(cloud_trace_exporter)
         trace.get_tracer_provider().add_span_processor(span_processor)
         
-        # Setup metrics
-        cloud_monitoring_exporter = CloudMonitoringMetricsExporter()
-        metric_reader = PeriodicExportingMetricReader(cloud_monitoring_exporter)
-        meter_provider = MeterProvider(metric_readers=[metric_reader])
-        metrics.set_meter_provider(meter_provider)
+        # Setup metrics (if available)
+        if CloudMonitoringMetricsExporter is not None:
+            cloud_monitoring_exporter = CloudMonitoringMetricsExporter()
+            metric_reader = PeriodicExportingMetricReader(cloud_monitoring_exporter)
+            meter_provider = MeterProvider(metric_readers=[metric_reader])
+            metrics.set_meter_provider(meter_provider)
+        else:
+            # Fallback to basic metrics without cloud monitoring
+            meter_provider = MeterProvider()
+            metrics.set_meter_provider(meter_provider)
         
         # Instrument HTTP clients
         HTTPXClientInstrumentor().instrument()
