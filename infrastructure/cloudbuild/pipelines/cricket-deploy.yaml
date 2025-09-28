@@ -62,7 +62,7 @@ steps:
       - '--set-env-vars'
       - 'APP_ENV=prod,PORT=8080,GCP_PROJECT=${_PROJECT_ID},REGION=${_REGION},VERTEX_LOCATION=${_REGION},VERTEX_MODEL=gemini-1.5-flash,EMBED_MODEL=text-embedding-005,PLAYHQ_MODE=public,VECTOR_BACKEND=vertex_rag'
       - '--set-secrets'
-      - 'SECRET_PLAYHQ_API_KEY=projects/${_PROJECT_ID}/secrets/PLAYHQ_X_API_KEY/versions/latest,SECRET_IDS_BUNDLE=projects/${_PROJECT_ID}/secrets/CSCC_IDS/versions/latest,SECRET_INTERNAL_TOKEN=projects/${_PROJECT_ID}/secrets/CRICKET_INTERNAL_TOKEN/versions/latest'
+      - 'SECRET_PLAYHQ_API_KEY=projects/${_PROJECT_ID}/secrets/SECRET_PLAYHQ_API_KEY/versions/latest,SECRET_IDS_BUNDLE=projects/${_PROJECT_ID}/secrets/CSCC_IDS/versions/latest,SECRET_INTERNAL_TOKEN=projects/${_PROJECT_ID}/secrets/CRICKET_INTERNAL_TOKEN/versions/latest'
     waitFor: ['push-cricket-agent']
 
   # Skip Cricket Bridge - already deployed and running
