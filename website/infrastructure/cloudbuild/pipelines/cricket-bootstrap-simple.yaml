@@ -1,0 +1,28 @@
+steps:
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Bootstrap pipeline started"
+        echo "Project: ${_PROJECT_ID}"
+        echo "Region: ${_REGION}"
+        echo "Artifact Repo: ${_ARTIFACT_REPO}"
+        echo "State Bucket: ${_STATE_BUCKET}"
+        echo "Repo Owner: ${_REPO_OWNER}"
+        echo "Repo Name: ${_REPO_NAME}"
+        echo "Bootstrap pipeline completed successfully"
+
+substitutions:
+  _PROJECT_ID: 'virtual-stratum-473511-u5'
+  _REGION: 'australia-southeast1'
+  _ARTIFACT_REPO: 'anzx-agents'
+  _STATE_BUCKET: 'anzx-deploy-state'
+  _REPO_OWNER: 'inderanz'
+  _REPO_NAME: 'anzx-ai-virtual-agents'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  substitutionOption: 'ALLOW_LOOSE'
+
+timeout: '300s'

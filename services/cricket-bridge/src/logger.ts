@@ -5,7 +5,7 @@
 
 import winston from 'winston';
 import { LoggerConfig } from './types';
-import { metrics, trace } from '@opentelemetry/api';
+// OpenTelemetry imports removed for now - will be added back when packages are available
 
 class CricketLogger {
   private logger: winston.Logger;
@@ -51,35 +51,8 @@ class CricketLogger {
   }
   
   private setupMetrics() {
-    try {
-      const meter = metrics.getMeter('cricket-bridge');
-      
-      this.messageCounter = meter.createCounter('cricket_bridge_messages_total', {
-        description: 'Total number of messages received'
-      });
-      
-      this.forwardCounter = meter.createCounter('cricket_bridge_forwards_total', {
-        description: 'Total number of messages forwarded to cricket agent'
-      });
-      
-      this.replyCounter = meter.createCounter('cricket_bridge_replies_total', {
-        description: 'Total number of replies sent'
-      });
-      
-      this.errorCounter = meter.createCounter('cricket_bridge_errors_total', {
-        description: 'Total number of errors'
-      });
-      
-      this.forwardLatencyHistogram = meter.createHistogram('cricket_bridge_forward_duration_ms', {
-        description: 'Duration of message forwarding in milliseconds'
-      });
-      
-      this.agentLatencyHistogram = meter.createHistogram('cricket_bridge_agent_latency_ms', {
-        description: 'Agent response latency in milliseconds'
-      });
-    } catch (error) {
-      this.logger.warn('Failed to setup OpenTelemetry metrics', { error: error.message });
-    }
+    // OpenTelemetry metrics setup disabled for now
+    // Will be re-enabled when packages are available
   }
 
   /**
@@ -113,7 +86,7 @@ class CricketLogger {
         chatType: isGroup ? 'group' : 'individual',
         source: 'whatsapp'
       });
-    } catch (error) {
+    } catch (error: any) {
       // Ignore metrics errors
     }
     
@@ -155,7 +128,7 @@ class CricketLogger {
       this.forwardLatencyHistogram?.record(forwardMs, {
         operation: 'forward_message'
       });
-    } catch (error) {
+    } catch (error: any) {
       // Ignore metrics errors
     }
     
@@ -184,7 +157,7 @@ class CricketLogger {
       this.agentLatencyHistogram?.record(agentLatencyMs, {
         operation: 'agent_response'
       });
-    } catch (error) {
+    } catch (error: any) {
       // Ignore metrics errors
     }
     
@@ -339,6 +312,13 @@ class CricketLogger {
       totalForwardMs: this.totalForwardMs,
       totalAgentLatencyMs: this.totalAgentLatencyMs
     };
+  }
+
+  /**
+   * Trace method for compatibility
+   */
+  trace(message: string, meta?: any) {
+    this.logger.debug(message, meta);
   }
 
   /**

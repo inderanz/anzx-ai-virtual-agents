@@ -4,7 +4,7 @@
  */
 
 import express from 'express';
-import { makeWASocket, DisconnectReason, useMultiFileAuthState, ConnectionState } from '@whiskeysockets/baileys';
+import { makeWASocket, DisconnectReason, useMultiFileAuthState } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import dotenv from 'dotenv';
 import qrcode from 'qrcode-terminal';
@@ -101,7 +101,7 @@ class CricketBridge {
       this.socket = makeWASocket({
         auth: authState.state,
         printQRInTerminal: process.env.NODE_ENV !== 'production',
-        logger: logger.getWinstonLogger(),
+        logger: logger.getWinstonLogger() as any,
         browser: ['Cricket Bridge', 'Chrome', '1.0.0'],
         generateHighQualityLinkPreview: true
       });
@@ -134,7 +134,7 @@ class CricketBridge {
   }
 
   private handleConnectionUpdate(update: any) {
-    const { connection, lastDisconnect, qr } = update;
+    const { connection, lastDisconnect } = update;
     
     if (connection === 'close') {
       const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
@@ -197,8 +197,6 @@ class CricketBridge {
 
   private async processMessage(event: MessageEvent) {
     try {
-      const startTime = Date.now();
-      
       // Clean message text
       const cleanText = filters.cleanMessage(event.messageText, this.me);
       
@@ -216,7 +214,6 @@ class CricketBridge {
         team_hint: event.isGroup ? event.chatId : undefined
       });
 
-      const forwardMs = Date.now() - startTime;
       const agentLatencyMs = response.meta?.latency_ms || 0;
 
       logger.replySent(event.chatId, response.answer.length, agentLatencyMs);
@@ -278,7 +275,7 @@ class CricketBridge {
 const cricketBridge = new CricketBridge();
 
 // Health check endpoint
-app.get('/healthz', async (req, res) => {
+app.get('/healthz', async (_req, res) => {
   const health: HealthResponse = {
     ok: true,
     connected: cricketBridge.isWhatsAppConnected(),
@@ -291,7 +288,7 @@ app.get('/healthz', async (req, res) => {
 });
 
 // Metrics endpoint
-app.get('/metrics', async (req, res) => {
+app.get('/metrics', async (_req, res) => {
   try {
     const metrics = logger.getMetrics();
     const prometheusLines = [
@@ -321,10 +318,10 @@ app.get('/metrics', async (req, res) => {
     ];
     
     res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
-    res.send(prometheusLines.join('\n'));
+    return res.send(prometheusLines.join('\n'));
   } catch (error) {
     logger.error('Failed to get metrics', error as Error);
-    res.status(500).json({ error: 'Failed to retrieve metrics' });
+    return res.status(500).json({ error: 'Failed to retrieve metrics' });
   }
 });
 
@@ -370,7 +367,7 @@ app.post('/relay', async (req, res) => {
       metadata: response.meta
     };
     
-    res.json(relayResponse);
+    return res.json(relayResponse);
     
   } catch (error) {
     logger.error('Relay error', error as Error);
@@ -378,7 +375,7 @@ app.post('/relay', async (req, res) => {
       success: false,
       error: 'Failed to process message'
     };
-    res.status(500).json(relayResponse);
+    return res.status(500).json(relayResponse);
   }
 });
 

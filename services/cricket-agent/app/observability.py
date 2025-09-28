@@ -4,6 +4,7 @@ Structured logging, metrics, and monitoring setup with OpenTelemetry integration
 """
 
 import logging
+import os
 import sys
 import json
 import time
@@ -15,8 +16,12 @@ try:
     from google.cloud import error_reporting
 except ImportError:
     error_reporting = None
-from opentelemetry import trace
-from opentelemetry import metrics
+try:
+    from opentelemetry import trace
+    from opentelemetry import metrics
+except ImportError:
+    trace = None
+    metrics = None
 try:
     from opentelemetry.exporter.cloud_monitoring import CloudMonitoringMetricsExporter
 except ImportError:
@@ -389,12 +394,19 @@ def setup_observability():
         # Setup structured logging
         setup_logging()
         
-        # Setup Google Cloud Logging
-        client = cloud_logging.Client()
-        client.setup_logging()
+        # Setup Google Cloud Logging (if available)
+        try:
+            client = cloud_logging.Client()
+            client.setup_logging()
+        except Exception as e:
+            logging.warning(f"Failed to setup Cloud Logging: {e}")
         
-        # Setup error reporting
-        error_client = error_reporting.Client()
+        # Setup error reporting (if available)
+        try:
+            if error_reporting is not None:
+                error_client = error_reporting.Client()
+        except Exception as e:
+            logging.warning(f"Failed to setup Error Reporting: {e}")
         
         # Setup OpenTelemetry
         _setup_telemetry()
@@ -408,6 +420,11 @@ def setup_observability():
 def _setup_telemetry():
     """Setup OpenTelemetry tracing and metrics"""
     try:
+        # Check if OpenTelemetry is available
+        if trace is None or metrics is None:
+            logging.info("OpenTelemetry not available, skipping telemetry setup")
+            return
+            
         # Setup tracing (if available)
         if TracerProvider is not None:
             trace.set_tracer_provider(TracerProvider())

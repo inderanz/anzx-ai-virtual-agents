@@ -1,0 +1,288 @@
+# Cloud Build Bootstrap Pipeline for Cricket Services
+# Clean version that avoids substitution conflicts
+
+steps:
+  # Stage 1: Enable Required APIs
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'enable-apis'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        echo "Enabling required APIs..."
+        
+        # Enable core APIs
+        gcloud services enable run.googleapis.com
+        gcloud services enable artifactregistry.googleapis.com
+        gcloud services enable secretmanager.googleapis.com
+        gcloud services enable cloudbuild.googleapis.com
+        gcloud services enable cloudscheduler.googleapis.com
+        gcloud services enable aiplatform.googleapis.com
+        gcloud services enable iam.googleapis.com
+        gcloud services enable serviceusage.googleapis.com
+        gcloud services enable cloudresourcemanager.googleapis.com
+        
+        echo '{"action": "enable_apis", "status": "success", "apis": ["run", "artifactregistry", "secretmanager", "cloudbuild", "cloudscheduler", "aiplatform", "iam", "serviceusage"]}'
+    waitFor: ['-']
+
+  # Stage 2: Ensure GCS State Bucket
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'ensure-bucket'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        
+        if gsutil ls -b gs://${_STATE_BUCKET} >/dev/null 2>&1; then
+          echo '{"action": "ensure_bucket", "status": "exists", "bucket": "'${_STATE_BUCKET}'"}'
+        else
+          gsutil mb -p ${_PROJECT_ID} -c STANDARD -l ${_REGION} gs://${_STATE_BUCKET}
+          echo '{"action": "ensure_bucket", "status": "created", "bucket": "'${_STATE_BUCKET}'"}'
+        fi
+    waitFor: ['-']
+
+  # Stage 3: Ensure Artifact Registry Repository
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'ensure-artifact-repo'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        
+        if gcloud artifacts repositories describe ${_ARTIFACT_REPO} --location=${_REGION} >/dev/null 2>&1; then
+          echo '{"action": "ensure_artifact_repo", "status": "exists", "repo": "'${_ARTIFACT_REPO}'", "region": "'${_REGION}'"}'
+        else
+          gcloud artifacts repositories create ${_ARTIFACT_REPO} \
+            --repository-format=docker \
+            --location=${_REGION} \
+            --description="Docker images for ANZX cricket services"
+          echo '{"action": "ensure_artifact_repo", "status": "created", "repo": "'${_ARTIFACT_REPO}'", "region": "'${_REGION}'"}'
+        fi
+    waitFor: ['-']
+
+  # Stage 4: Ensure Service Accounts
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'ensure-service-accounts'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        
+        # Create sa-cricket-agent
+        if gcloud iam service-accounts describe sa-cricket-agent@${_PROJECT_ID}.iam.gserviceaccount.com >/dev/null 2>&1; then
+          echo '{"action": "ensure_sa", "status": "exists", "sa": "sa-cricket-agent"}'
+        else
+          gcloud iam service-accounts create sa-cricket-agent \
+            --display-name="Cricket Agent Service Account" \
+            --description="Service account for cricket-agent Cloud Run service"
+          echo '{"action": "ensure_sa", "status": "created", "sa": "sa-cricket-agent"}'
+        fi
+        
+        # Create sa-cricket-bridge
+        if gcloud iam service-accounts describe sa-cricket-bridge@${_PROJECT_ID}.iam.gserviceaccount.com >/dev/null 2>&1; then
+          echo '{"action": "ensure_sa", "status": "exists", "sa": "sa-cricket-bridge"}'
+        else
+          gcloud iam service-accounts create sa-cricket-bridge \
+            --display-name="Cricket Bridge Service Account" \
+            --description="Service account for cricket-bridge Cloud Run service"
+          echo '{"action": "ensure_sa", "status": "created", "sa": "sa-cricket-bridge"}'
+        fi
+    waitFor: ['-']
+
+  # Stage 5: Configure IAM Bindings
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'configure-iam'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        
+        # Cloud Build SA permissions
+        gcloud projects add-iam-policy-binding ${_PROJECT_ID} \
+          --member="serviceAccount:${_PROJECT_ID}@cloudbuild.gserviceaccount.com" \
+          --role="roles/run.admin" || true
+        
+        gcloud projects add-iam-policy-binding ${_PROJECT_ID} \
+          --member="serviceAccount:${_PROJECT_ID}@cloudbuild.gserviceaccount.com" \
+          --role="roles/artifactregistry.writer" || true
+        
+        gcloud projects add-iam-policy-binding ${_PROJECT_ID} \
+          --member="serviceAccount:${_PROJECT_ID}@cloudbuild.gserviceaccount.com" \
+          --role="roles/secretmanager.secretAccessor" || true
+        
+        gcloud projects add-iam-policy-binding ${_PROJECT_ID} \
+          --member="serviceAccount:${_PROJECT_ID}@cloudbuild.gserviceaccount.com" \
+          --role="roles/iam.serviceAccountUser" || true
+        
+        # Cricket Agent SA permissions
+        gcloud projects add-iam-policy-binding ${_PROJECT_ID} \
+          --member="serviceAccount:sa-cricket-agent@${_PROJECT_ID}.iam.gserviceaccount.com" \
+          --role="roles/secretmanager.secretAccessor" || true
+        
+        gcloud projects add-iam-policy-binding ${_PROJECT_ID} \
+          --member="serviceAccount:sa-cricket-agent@${_PROJECT_ID}.iam.gserviceaccount.com" \
+          --role="roles/aiplatform.user" || true
+        
+        gcloud projects add-iam-policy-binding ${_PROJECT_ID} \
+          --member="serviceAccount:sa-cricket-agent@${_PROJECT_ID}.iam.gserviceaccount.com" \
+          --role="roles/storage.objectAdmin" || true
+        
+        # Cricket Bridge SA permissions
+        gcloud projects add-iam-policy-binding ${_PROJECT_ID} \
+          --member="serviceAccount:sa-cricket-bridge@${_PROJECT_ID}.iam.gserviceaccount.com" \
+          --role="roles/secretmanager.secretAccessor" || true
+        
+        gcloud projects add-iam-policy-binding ${_PROJECT_ID} \
+          --member="serviceAccount:sa-cricket-bridge@${_PROJECT_ID}.iam.gserviceaccount.com" \
+          --role="roles/storage.objectAdmin" || true
+        
+        echo '{"action": "configure_iam", "status": "success", "bindings": ["cloud_build", "cricket_agent", "cricket_bridge"]}'
+    waitFor: ['enable-apis', 'ensure-service-accounts']
+
+  # Stage 6: Ensure Required Secrets
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'ensure-secrets'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        
+        # CSCC_IDS secret (required)
+        if gcloud secrets describe CSCC_IDS >/dev/null 2>&1; then
+          echo '{"action": "ensure_secret", "status": "exists", "secret": "CSCC_IDS"}'
+        else
+          # Create placeholder JSON for CSCC_IDS
+          cat > /tmp/cscc_ids.json << 'JSONEOF'
+        {
+          "tenant": "ca",
+          "org_id": "placeholder-org-id",
+          "season_id": "placeholder-season-id", 
+          "grade_id": "placeholder-grade-id",
+          "teams": [
+            {
+              "name": "Caroline Springs Blue U10",
+              "team_id": "placeholder-team-id-1"
+            },
+            {
+              "name": "Caroline Springs White U10", 
+              "team_id": "placeholder-team-id-2"
+            }
+          ]
+        }
+        JSONEOF
+          echo -n "$(cat /tmp/cscc_ids.json)" | gcloud secrets create CSCC_IDS --data-file=-
+          echo '{"action": "ensure_secret", "status": "created", "secret": "CSCC_IDS", "note": "placeholder_data"}'
+        fi
+        
+        # CRICKET_INTERNAL_TOKEN secret (required)
+        if gcloud secrets describe CRICKET_INTERNAL_TOKEN >/dev/null 2>&1; then
+          echo '{"action": "ensure_secret", "status": "exists", "secret": "CRICKET_INTERNAL_TOKEN"}'
+        else
+          # Generate 32-byte random token directly
+          openssl rand -base64 32 | gcloud secrets create CRICKET_INTERNAL_TOKEN --data-file=-
+          echo '{"action": "ensure_secret", "status": "created", "secret": "CRICKET_INTERNAL_TOKEN", "note": "random_32_byte"}'
+        fi
+        
+        echo '{"action": "ensure_secrets", "status": "completed", "secrets_checked": ["CSCC_IDS", "CRICKET_INTERNAL_TOKEN"]}'
+    waitFor: ['-']
+
+  # Stage 7: Create/Update GitHub Trigger
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'ensure-trigger'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        
+        # Check if trigger exists
+        if gcloud builds triggers describe cricket-deploy >/dev/null 2>&1; then
+          echo "Trigger exists, updating configuration..."
+          gcloud builds triggers update cricket-deploy \
+            --build-config=infrastructure/cloudbuild/pipelines/cricket-deploy.yaml \
+            --repo-name=${_REPO_NAME} \
+            --repo-owner=${_REPO_OWNER} \
+            --branch-pattern="^main$" \
+            --substitutions=_REGION=${_REGION},_BRIDGE_SESSION_BACKEND=NONE,_CLOUDFLARE_DEPLOY=false || true
+          echo '{"action": "ensure_trigger", "status": "updated", "trigger": "cricket-deploy"}'
+        else
+          echo "Creating new trigger..."
+          gcloud builds triggers create github \
+            --name=cricket-deploy \
+            --build-config=infrastructure/cloudbuild/pipelines/cricket-deploy.yaml \
+            --repo-name=${_REPO_NAME} \
+            --repo-owner=${_REPO_OWNER} \
+            --branch-pattern="^main$" \
+            --substitutions=_REGION=${_REGION},_BRIDGE_SESSION_BACKEND=NONE,_CLOUDFLARE_DEPLOY=false || true
+          echo '{"action": "ensure_trigger", "status": "created", "trigger": "cricket-deploy"}'
+        fi
+    waitFor: ['-']
+
+  # Stage 8: Write Bootstrap State
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'write-bootstrap-state'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        
+        # Create state JSON
+        cat > /tmp/bootstrap-state.json << JSONEOF
+        {
+          "bootstrap": {
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "project_id": "${_PROJECT_ID}",
+            "region": "${_REGION}",
+            "artifact_repo": "${_ARTIFACT_REPO}",
+            "state_bucket": "${_STATE_BUCKET}",
+            "apis_enabled": [
+              "run.googleapis.com",
+              "artifactregistry.googleapis.com", 
+              "secretmanager.googleapis.com",
+              "cloudbuild.googleapis.com",
+              "cloudscheduler.googleapis.com",
+              "aiplatform.googleapis.com",
+              "iam.googleapis.com",
+              "serviceusage.googleapis.com",
+              "cloudresourcemanager.googleapis.com"
+            ],
+            "service_accounts": [
+              "sa-cricket-agent@${_PROJECT_ID}.iam.gserviceaccount.com",
+              "sa-cricket-bridge@${_PROJECT_ID}.iam.gserviceaccount.com"
+            ],
+            "secrets_created": [
+              "CSCC_IDS",
+              "CRICKET_INTERNAL_TOKEN"
+            ],
+            "trigger_created": "cricket-deploy"
+          }
+        }
+        JSONEOF
+        
+        # Upload to GCS
+        gsutil cp /tmp/bootstrap-state.json gs://${_STATE_BUCKET}/state/bootstrap-${SHORT_SHA}.json
+        
+        echo '{"action": "write_bootstrap_state", "status": "success", "file": "bootstrap-${SHORT_SHA}.json"}'
+    waitFor: ['ensure-bucket']
+
+# Global substitutions with defaults
+substitutions:
+  _PROJECT_ID: 'virtual-stratum-473511-u5'
+  _REGION: 'australia-southeast1'
+  _ARTIFACT_REPO: 'anzx-agents'
+  _STATE_BUCKET: 'anzx-deploy-state'
+  _REPO_OWNER: 'inderanz'
+  _REPO_NAME: 'anzx-ai-virtual-agents'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  substitutionOption: 'ALLOW_LOOSE'
+
+timeout: '1800s'  # 30 minutes

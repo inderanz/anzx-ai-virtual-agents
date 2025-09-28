@@ -533,6 +533,123 @@ gcloud billing budgets create \
 - Workload Identity for secret access
 - Regular permission audits
 
+## Cloudflare Worker (Optional)
+
+The platform supports deploying a Cloudflare Worker to proxy `/api/cricket/*` requests to the cricket-agent Cloud Run service, providing a public API endpoint.
+
+### Prerequisites
+
+**Required Secrets in Secret Manager:**
+- `CLOUDFLARE_API_TOKEN` - Cloudflare API token
+- `CLOUDFLARE_ACCOUNT_ID` - Cloudflare account ID for anzx.ai
+- `CLOUDFLARE_ZONE_ID` - Zone ID for anzx.ai domain
+- `CLOUDFLARE_WORKER_NAME` - Worker name (e.g., `anzx-cricket-proxy`)
+- `CLOUDFLARE_ROUTE_PATTERN` - Route pattern (e.g., `anzx.ai/api/cricket*`)
+
+### Enabling Cloudflare Worker Deployment
+
+**Option 1: Cloud Build Trigger Configuration**
+```bash
+# Create trigger with Cloudflare deployment enabled
+gcloud builds triggers create github \
+  --repo-name=anzx-ai-virtual-agents \
+  --repo-owner=your-github-username \
+  --branch-pattern="^main$" \
+  --build-config=infrastructure/cloudbuild/pipelines/cricket-deploy.yaml \
+  --substitutions=_CLOUDFLARE_DEPLOY=true,_ENVIRONMENT=$ENVIRONMENT,_REGION=$REGION,_PROJECT_ID=$PROJECT_ID \
+  --name=cricket-deploy-with-cloudflare
+```
+
+**Option 2: Manual Deployment**
+```bash
+# Deploy with Cloudflare Worker
+gcloud builds submit \
+  --config=infrastructure/cloudbuild/pipelines/cricket-deploy.yaml \
+  --substitutions=_CLOUDFLARE_DEPLOY=true,_ENVIRONMENT=$ENVIRONMENT,_REGION=$REGION,_PROJECT_ID=$PROJECT_ID \
+  .
+```
+
+### What the Cloudflare Worker Does
+
+- **Proxy Requests:** Forwards `/api/cricket/*` requests to cricket-agent Cloud Run
+- **CORS Support:** Handles CORS preflight requests for `https://anzx.ai`
+- **Path Mapping:** Maps `/api/cricket/healthz` → `/healthz`, `/api/cricket/v1/ask` → `/v1/ask`
+- **Error Handling:** Returns appropriate error responses for proxy failures
+
+### Validation
+
+**Test the Cloudflare Worker:**
+```bash
+# Health check
+curl -I https://anzx.ai/api/cricket/healthz
+
+# Cricket query
+curl -X POST https://anzx.ai/api/cricket/v1/ask \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"Show me the fixtures for Caroline Springs", "source":"web"}'
+
+# CORS preflight
+curl -X OPTIONS https://anzx.ai/api/cricket/v1/ask \
+  -H 'Origin: https://anzx.ai' \
+  -H 'Access-Control-Request-Method: POST' \
+  -H 'Access-Control-Request-Headers: Content-Type'
+```
+
+**Expected Responses:**
+- Health check: `200 OK` with CORS headers
+- Cricket query: JSON response with cricket data
+- CORS preflight: `204 No Content` with CORS headers
+
+### Worker Configuration
+
+The Worker is configured via `infrastructure/cloudflare/wrangler.toml.tmpl`:
+
+```toml
+name = "anzx-cricket-proxy"
+main = "infrastructure/cloudflare/worker.js"
+compatibility_date = "2025-09-28"
+account_id = "your-account-id"
+routes = [
+  { pattern = "anzx.ai/api/cricket*", zone_id = "your-zone-id" }
+]
+[vars]
+CRICKET_AGENT_URL = "https://cricket-agent-xxxxx-uc.a.run.app"
+```
+
+### Deployment State
+
+When Cloudflare Worker deployment is enabled, the deployment state includes:
+
+```json
+{
+  "cloudflare": {
+    "worker_name": "anzx-cricket-proxy",
+    "route_pattern": "anzx.ai/api/cricket*",
+    "zone_id": "your-zone-id",
+    "account_id": "your-account-id", 
+    "wrangler_version": "3.x.x",
+    "status": "deployed"
+  }
+}
+```
+
+### Troubleshooting
+
+**Worker Not Deploying:**
+- Check all required secrets exist in Secret Manager
+- Verify `_CLOUDFLARE_DEPLOY=true` is set
+- Check Cloudflare API token permissions
+
+**Proxy Errors:**
+- Verify cricket-agent Cloud Run service is healthy
+- Check Worker logs in Cloudflare dashboard
+- Test direct cricket-agent URL
+
+**CORS Issues:**
+- Verify Origin header is `https://anzx.ai`
+- Check CORS headers in response
+- Test with browser developer tools
+
 ## Next Steps
 
 1. **Production Deployment:** Update environment variables for production

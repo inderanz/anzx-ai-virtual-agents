@@ -1,0 +1,43 @@
+{
+  "name": "anzx-website",
+  "version": "1.0.0",
+  "description": "ANZx.ai Website with Cricket Agent Interface",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "dev": "python3 -m http.server 8080",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint scripts/**/*.js",
+    "build": "echo 'Static website - no build step required'",
+    "serve": "python3 -m http.server 8080"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "eslint": "^8.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+    "testMatch": ["<rootDir>/tests/**/*.test.js"],
+    "collectCoverageFrom": [
+      "scripts/**/*.js",
+      "!scripts/main.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": ["text", "lcov", "html"]
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "website",
+    "cricket",
+    "ai",
+    "chat",
+    "interface"
+  ],
+  "author": "ANZx.ai",
+  "license": "MIT"
+}

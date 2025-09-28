@@ -81,61 +81,51 @@ steps:
   # Write deployment state
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     id: 'write-deployment-state'
-    entrypoint: 'python3'
+    entrypoint: 'bash'
     args:
       - '-c'
       - |
-        import json
-        import subprocess
-        import os
-        from datetime import datetime
+        set -euo pipefail
         
         # Get service URLs
-        agent_url = subprocess.check_output([
-            'gcloud', 'run', 'services', 'describe', 'cricket-agent',
-            '--region', os.environ['_REGION'],
-            '--format', 'value(status.url)'
-        ]).decode().strip()
+        AGENT_URL=$$(gcloud run services describe cricket-agent --region ${_REGION} --format='value(status.url)')
         
         # Cricket Bridge is already deployed, get its URL
-        try:
-            bridge_url = subprocess.check_output([
-                'gcloud', 'run', 'services', 'describe', 'cricket-bridge',
-                '--region', os.environ['_REGION'],
-                '--format', 'value(status.url)'
-            ]).decode().strip()
-        except subprocess.CalledProcessError:
-            bridge_url = "https://cricket-bridge-621175176615.australia-southeast1.run.app"  # Known URL
+        if BRIDGE_URL=$$(gcloud run services describe cricket-bridge --region ${_REGION} --format='value(status.url)' 2>/dev/null); then
+          echo "Bridge URL found: $$BRIDGE_URL"
+        else
+          BRIDGE_URL="https://cricket-bridge-621175176615.australia-southeast1.run.app"
+          echo "Using known Bridge URL: $$BRIDGE_URL"
+        fi
         
-        # Create deployment state
-        state = {
-            "deployment": {
-                "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-                "build_id": os.environ['BUILD_ID'],
-                "short_sha": os.environ['BUILD_ID'],
-                "project_id": os.environ['_PROJECT_ID'],
-                "region": os.environ['_REGION'],
-                "services": {
-                    "cricket-agent": {
-                        "url": agent_url,
-                        "image": f"{os.environ['_REGION']}-docker.pkg.dev/{os.environ['_PROJECT_ID']}/{os.environ['_ARTIFACT_REPO']}/cricket-agent:{os.environ['BUILD_ID']}"
-                    },
-                    "cricket-bridge": {
-                        "url": bridge_url,
-                        "image": f"{os.environ['_REGION']}-docker.pkg.dev/{os.environ['_PROJECT_ID']}/{os.environ['_ARTIFACT_REPO']}/cricket-bridge:{os.environ['BUILD_ID']}"
-                    }
-                }
+        # Create deployment state JSON
+        cat > /tmp/deployment-state.json << JSONEOF
+        {
+          "deployment": {
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "build_id": "${BUILD_ID}",
+            "short_sha": "${BUILD_ID}",
+            "project_id": "${_PROJECT_ID}",
+            "region": "${_REGION}",
+            "services": {
+              "cricket-agent": {
+                "url": "$$AGENT_URL",
+                "image": "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-agent:${BUILD_ID}"
+              },
+              "cricket-bridge": {
+                "url": "$$BRIDGE_URL",
+                "image": "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REPO}/cricket-bridge:${BUILD_ID}"
+              }
             }
+          }
         }
+        JSONEOF
         
-        # Write to file
-        with open('/tmp/deployment-state.json', 'w') as f:
-            json.dump(state, f, indent=2)
         
         # Upload to GCS
-        subprocess.run(['gsutil', 'cp', '/tmp/deployment-state.json', f'gs://anzx-deploy-state/state/deploy-{os.environ["BUILD_ID"]}.json'])
+        gsutil cp /tmp/deployment-state.json gs://anzx-deploy-state/state/deploy-${BUILD_ID}.json
         
-        print('{"action": "write_deployment_state", "status": "success", "file": "deploy-' + os.environ['BUILD_ID'] + '.json"}')
+        echo '{"action": "write_deployment_state", "status": "success", "file": "deploy-'${BUILD_ID}'.json"}'
     waitFor: ['deploy-cricket-agent', 'skip-cricket-bridge']
 
 # Global substitutions with defaults
