@@ -1,0 +1,44 @@
+# Caroline Springs CC Cricket Agent - Dependencies
+# Following requirements.md specifications
+
+# FastAPI and ASGI
+fastapi==0.95.2
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# Google Cloud AI Platform (ADK & Agent Engine)
+google-cloud-aiplatform[adk,agent_engine]>=1.112.0,<2.0
+google-cloud-secret-manager>=2.20.0
+google-cloud-logging>=3.10.0
+google-cloud-matching-engine>=0.1.0
+google-cloud-storage>=2.10.0
+google-cloud-error-reporting>=3.0.0
+
+# OpenTelemetry Observability
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-exporter-cloud-monitoring>=1.0.0
+opentelemetry-exporter-cloud-trace>=1.0.0
+opentelemetry-instrumentation-fastapi>=0.42b0
+opentelemetry-instrumentation-httpx>=0.42b0
+opentelemetry-instrumentation-requests>=0.42b0
+
+# HTTP Client
+httpx>=0.25,<0.30
+
+# Data Processing
+pydantic>=2.5,<3.0
+pydantic-settings>=2.0.0
+orjson>=3.10
+
+# Retry Logic
+tenacity>=9,<10
+
+# Development & Testing
+pytest>=8,<9
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+
+# Utilities
+python-dotenv>=1.0.0
+structlog>=23.2.0

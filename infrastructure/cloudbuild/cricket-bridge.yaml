@@ -1,0 +1,103 @@
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/cricket-bridge:${BUILD_ID}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/cricket-bridge:latest'
+      - './services/cricket-bridge'
+    id: 'build-image'
+
+  # Push the Docker image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/cricket-bridge'
+    id: 'push-image'
+    waitFor: ['build-image']
+
+  # Run tests
+  - name: '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/cricket-bridge:${BUILD_ID}'
+    entrypoint: 'npm'
+    args: ['test']
+    env:
+      - 'NODE_ENV=test'
+      - 'CRICKET_AGENT_URL=http://localhost:8002'
+      - 'RELAY_TOKEN=test-token'
+    id: 'run-tests'
+    waitFor: ['build-image']
+
+  # Security scan
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'container'
+      - 'images'
+      - 'scan'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/cricket-bridge:${BUILD_ID}'
+      - '--format=json'
+    id: 'security-scan'
+    waitFor: ['push-image']
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_SERVICE_NAME}'
+      - '--image=${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/cricket-bridge:${BUILD_ID}'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--no-allow-unauthenticated'
+      - '--set-env-vars=CRICKET_AGENT_URL=${_CRICKET_AGENT_URL},RELAY_TOKEN=${_RELAY_TOKEN},GCS_BUCKET=${_GCS_BUCKET}'
+      - '--max-instances=5'
+      - '--min-instances=1'
+      - '--memory=2Gi'
+      - '--cpu=1'
+      - '--timeout=300'
+      - '--concurrency=10'
+      - '--service-account=${_SERVICE_ACCOUNT}'
+      - '--execution-environment=gen2'
+      - '--cpu-always-allocated'
+    id: 'deploy-service'
+    waitFor: ['run-tests', 'security-scan']
+
+  # Health check after deployment
+  - name: 'gcr.io/cloud-builders/curl'
+    args:
+      - '-f'
+      - '-H'
+      - 'Authorization: Bearer $(gcloud auth print-access-token)'
+      - '$(gcloud run services describe ${_SERVICE_NAME} --region=${_REGION} --format="value(status.url)")/healthz'
+    id: 'health-check'
+    waitFor: ['deploy-service']
+
+# Store build artifacts
+artifacts:
+  objects:
+    location: 'gs://${_PROJECT_ID}-${_ENVIRONMENT}-build-artifacts'
+    paths:
+      - 'services/cricket-bridge/coverage.xml'
+
+# Build options
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
+  substitutionOption: 'ALLOW_LOOSE'
+
+# Timeout for the entire build
+timeout: '1200s'
+
+# Substitutions (provided by trigger)
+substitutions:
+  _ENVIRONMENT: 'dev'
+  _REGION: 'australia-southeast1'
+  _PROJECT_ID: 'your-project-id'
+  _REPO_NAME: 'anzx-repo'
+  _SERVICE_NAME: 'dev-anzx-cricket-bridge'
+  _SERVICE_ACCOUNT: 'cricket-bridge-sa@your-project-id.iam.gserviceaccount.com'
+  _CRICKET_AGENT_URL: 'https://dev-anzx-cricket-agent-xxxxx-uc.a.run.app'
+  _RELAY_TOKEN: 'your-relay-token'
+  _GCS_BUCKET: 'your-project-id-dev-cricket-bridge-sessions'

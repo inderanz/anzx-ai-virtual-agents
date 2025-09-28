@@ -1,0 +1,363 @@
+openapi: 3.0.3
+info:
+  title: Caroline Springs CC Cricket Agent API
+  description: Real-time cricket agent for Caroline Springs Cricket Club
+  version: 1.0.0
+  contact:
+    name: ANZX AI Platform
+    email: support@anzx.ai
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://cricket-agent.anzx-ai-platform.run.app
+    description: Production server
+  - url: http://localhost:8002
+    description: Development server
+
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      description: Basic health check endpoint
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                  service:
+                    type: string
+                    example: cricket-agent
+                  version:
+                    type: string
+                    example: 1.0.0
+
+  /healthz/detailed:
+    get:
+      summary: Detailed health check
+      description: Detailed health check with service dependencies
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Detailed health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                  service:
+                    type: string
+                    example: cricket-agent
+                  version:
+                    type: string
+                    example: 1.0.0
+                  checks:
+                    type: object
+                    properties:
+                      playhq_api:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: healthy
+                          message:
+                            type: string
+                            example: PlayHQ API connection successful
+                      vector_store:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: healthy
+                          message:
+                            type: string
+                            example: Vector store connection successful
+
+  /v1/ask:
+    post:
+      summary: Ask cricket agent
+      description: |
+        Main endpoint for cricket agent queries supporting 6 canonical intents:
+        - **Player Team Lookup**: "Which team player {name} is part of?"
+        - **Player Last Runs**: "How many runs did {name} score in last match?"
+        - **Fixtures List**: "List all fixtures for {team}"
+        - **Ladder Position**: "Where are {team} on the ladder?"
+        - **Next Fixture**: "For {team}, next fixture venue and start time?"
+        - **Roster List**: "For {team}, list all players"
+        
+        Uses regex-first intent detection with LLM fallback, RAG retrieval, and PlayHQ API integration.
+        Responses include formatted cricket information with metadata and performance metrics.
+      tags:
+        - Cricket Agent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskRequest'
+      responses:
+        '200':
+          description: Successful response with formatted cricket information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AskResponse'
+        '400':
+          description: Bad request - invalid query format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /internal/refresh:
+    post:
+      summary: Refresh cricket data
+      description: Internal endpoint to refresh cricket data
+      tags:
+        - Internal
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Refresh successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    AskRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: User query text supporting 6 canonical intents
+          example: "What are the fixtures for Caroline Springs Blue U10?"
+        source:
+          type: string
+          description: Source channel
+          enum: [web, whatsapp]
+          example: web
+        team_hint:
+          type: string
+          description: Optional team hint for disambiguation
+          example: "Caroline Springs Blue U10"
+      examples:
+        player_team:
+          summary: Player team lookup
+          value:
+            text: "Which team player John Smith is part of?"
+            source: "web"
+        player_last_runs:
+          summary: Player last match runs
+          value:
+            text: "How many runs did John Smith score in last match?"
+            source: "web"
+        fixtures_list:
+          summary: Team fixtures list
+          value:
+            text: "Under WRJCA 2025/26 for Caroline Springs Blue 10s, list all fixtures"
+            source: "web"
+        ladder_position:
+          summary: Team ladder position
+          value:
+            text: "Where are Caroline Springs Blue 10s on the ladder?"
+            source: "web"
+        next_fixture:
+          summary: Next team fixture
+          value:
+            text: "For Caroline Springs White 10s, next fixture venue and start time?"
+            source: "web"
+        roster_list:
+          summary: Team roster list
+          value:
+            text: "For Caroline Springs White 10s, list all players"
+            source: "web"
+
+    AskResponse:
+      type: object
+      required:
+        - answer
+        - meta
+      properties:
+        answer:
+          type: string
+          description: AI response text with formatted cricket information
+          example: "Caroline Springs Blue U10 has 3 upcoming fixtures this season."
+        meta:
+          type: object
+          description: Response metadata and performance metrics
+          properties:
+            request_id:
+              type: string
+              description: Unique request identifier for tracing
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            latency_ms:
+              type: integer
+              description: Response latency in milliseconds
+              example: 1250
+            intent:
+              type: string
+              description: Detected intent from 6 canonical types
+              enum: [player_team, player_last_runs, fixtures_list, ladder_position, next_fixture, roster_list, general_query]
+              example: "fixtures_list"
+            entities:
+              type: object
+              description: Extracted entities (player names, team names, etc.)
+              example:
+                team_name: "Caroline Springs Blue U10"
+                player_name: "John Smith"
+            cache_hit:
+              type: boolean
+              description: Whether response was served from cache
+              example: false
+            rag_hit:
+              type: boolean
+              description: Whether RAG retrieval was successful
+              example: true
+            source:
+              type: string
+              description: Source channel
+              example: "web"
+      examples:
+        player_team_response:
+          summary: Player team lookup response
+          value:
+            answer: "John Smith is part of **Caroline Springs Blue U10**."
+            meta:
+              request_id: "123e4567-e89b-12d3-a456-426614174000"
+              latency_ms: 850
+              intent: "player_team"
+              entities:
+                player_name: "John Smith"
+              cache_hit: false
+              rag_hit: true
+              source: "web"
+        fixtures_list_response:
+          summary: Team fixtures list response
+          value:
+            answer: |
+              Here are the fixtures for **Caroline Springs Blue U10**:
+
+              **Upcoming Fixtures:**
+              - **Sat 12 Oct 2025, 9:00 AM** – vs Caroline Springs White U10 at Caroline Springs Oval (SCHEDULED)
+              - **Sat 19 Oct 2025, 9:00 AM** – vs Melton U10 at Melton Oval (SCHEDULED)
+
+              **Last Completed Fixtures:**
+              - **Sat 05 Oct 2025, 9:00 AM** – vs Sunbury U10 at Caroline Springs Oval (COMPLETED) - Result: Won by 15 runs
+            meta:
+              request_id: "123e4567-e89b-12d3-a456-426614174001"
+              latency_ms: 950
+              intent: "fixtures_list"
+              entities:
+                team_name: "Caroline Springs Blue U10"
+              cache_hit: false
+              rag_hit: true
+              source: "web"
+
+    RefreshRequest:
+      type: object
+      properties:
+        scope:
+          type: string
+          description: Refresh scope
+          enum: [all, team, match, ladder]
+          default: all
+          example: all
+        id:
+          type: string
+          description: Specific ID for targeted refresh
+          example: "team-123"
+
+    RefreshResponse:
+      type: object
+      required:
+        - status
+        - message
+        - updated_count
+      properties:
+        status:
+          type: string
+          example: success
+        message:
+          type: string
+          example: "Data refreshed for scope: all"
+        updated_count:
+          type: integer
+          example: 15
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - detail
+      properties:
+        error:
+          type: string
+          example: "Internal server error"
+        detail:
+          type: string
+          example: "Failed to process query: Connection timeout"
+        path:
+          type: string
+          example: "/v1/ask"
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Cricket Agent
+    description: Cricket agent query endpoints
+  - name: Internal
+    description: Internal service endpoints
