@@ -12,11 +12,8 @@ from fastapi import HTTPException, Request
 from .config import get_settings
 from .webhook_models import WebhookRequest, WebhookResponse, WebhookEventType
 from .observability import get_logger, get_metrics
-from .agent.tools.normalize import (
-    normalize_fixture, normalize_scorecard, normalize_ladder, normalize_roster,
-    generate_fixture_snippet, generate_scorecard_snippet, generate_ladder_snippet, generate_roster_snippet
-)
-from .agent.tools.vector_client import get_vector_client
+from agent.tools.normalize import normalize_playhq_data, generate_snippet
+from agent.tools.vector_client import get_vector_client
 
 logger = get_logger(__name__)
 
