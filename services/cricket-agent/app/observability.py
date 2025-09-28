@@ -21,14 +21,34 @@ try:
     from opentelemetry.exporter.cloud_monitoring import CloudMonitoringMetricsExporter
 except ImportError:
     CloudMonitoringMetricsExporter = None
-from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
-from opentelemetry.instrumentation.requests import RequestsInstrumentor
+try:
+    from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
+except ImportError:
+    CloudTraceSpanExporter = None
+try:
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.sdk.metrics import MeterProvider
+    from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+except ImportError:
+    TracerProvider = None
+    BatchSpanProcessor = None
+    MeterProvider = None
+    PeriodicExportingMetricReader = None
+try:
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+except ImportError:
+    FastAPIInstrumentor = None
+
+try:
+    from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+except ImportError:
+    HTTPXClientInstrumentor = None
+
+try:
+    from opentelemetry.instrumentation.requests import RequestsInstrumentor
+except ImportError:
+    RequestsInstrumentor = None
 
 def setup_logging():
     """Setup structured logging for the cricket agent"""
@@ -388,29 +408,34 @@ def setup_observability():
 def _setup_telemetry():
     """Setup OpenTelemetry tracing and metrics"""
     try:
-        # Setup tracing
-        trace.set_tracer_provider(TracerProvider())
-        tracer = trace.get_tracer(__name__)
-        
-        # Add Cloud Trace exporter
-        cloud_trace_exporter = CloudTraceSpanExporter()
-        span_processor = BatchSpanProcessor(cloud_trace_exporter)
-        trace.get_tracer_provider().add_span_processor(span_processor)
+        # Setup tracing (if available)
+        if TracerProvider is not None:
+            trace.set_tracer_provider(TracerProvider())
+            tracer = trace.get_tracer(__name__)
+            
+            # Add Cloud Trace exporter (if available)
+            if CloudTraceSpanExporter is not None and BatchSpanProcessor is not None:
+                cloud_trace_exporter = CloudTraceSpanExporter()
+                span_processor = BatchSpanProcessor(cloud_trace_exporter)
+                trace.get_tracer_provider().add_span_processor(span_processor)
         
         # Setup metrics (if available)
-        if CloudMonitoringMetricsExporter is not None:
-            cloud_monitoring_exporter = CloudMonitoringMetricsExporter()
-            metric_reader = PeriodicExportingMetricReader(cloud_monitoring_exporter)
-            meter_provider = MeterProvider(metric_readers=[metric_reader])
-            metrics.set_meter_provider(meter_provider)
-        else:
-            # Fallback to basic metrics without cloud monitoring
-            meter_provider = MeterProvider()
-            metrics.set_meter_provider(meter_provider)
+        if MeterProvider is not None:
+            if CloudMonitoringMetricsExporter is not None and PeriodicExportingMetricReader is not None:
+                cloud_monitoring_exporter = CloudMonitoringMetricsExporter()
+                metric_reader = PeriodicExportingMetricReader(cloud_monitoring_exporter)
+                meter_provider = MeterProvider(metric_readers=[metric_reader])
+                metrics.set_meter_provider(meter_provider)
+            else:
+                # Fallback to basic metrics without cloud monitoring
+                meter_provider = MeterProvider()
+                metrics.set_meter_provider(meter_provider)
         
-        # Instrument HTTP clients
-        HTTPXClientInstrumentor().instrument()
-        RequestsInstrumentor().instrument()
+        # Instrument HTTP clients (if available)
+        if HTTPXClientInstrumentor is not None:
+            HTTPXClientInstrumentor().instrument()
+        if RequestsInstrumentor is not None:
+            RequestsInstrumentor().instrument()
         
     except Exception as e:
         logging.warning(f"OpenTelemetry setup failed: {e}")
@@ -418,7 +443,8 @@ def _setup_telemetry():
 def instrument_fastapi(app):
     """Instrument FastAPI app with OpenTelemetry"""
     try:
-        FastAPIInstrumentor.instrument_app(app)
+        if FastAPIInstrumentor is not None:
+            FastAPIInstrumentor.instrument_app(app)
     except Exception as e:
         logging.warning(f"FastAPI instrumentation failed: {e}")
 
