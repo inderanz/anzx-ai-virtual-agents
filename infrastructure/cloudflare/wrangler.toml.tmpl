@@ -10,12 +10,15 @@ account_id = "${CLOUDFLARE_ACCOUNT_ID}"
 
 # Route configuration
 routes = [
-  { pattern = "${CLOUDFLARE_ROUTE_PATTERN}", zone_id = "${CLOUDFLARE_ZONE_ID}" }
+  { pattern = "${CLOUDFLARE_ROUTE_PATTERN}", zone_id = "${CLOUDFLARE_ZONE_ID}" },
+  { pattern = "anzx.ai/_next/*", zone_id = "${CLOUDFLARE_ZONE_ID}" },
+  { pattern = "anzx.ai/images/*", zone_id = "${CLOUDFLARE_ZONE_ID}" }
 ]
 
 # Environment variables
 [vars]
 CRICKET_AGENT_URL = "${CRICKET_AGENT_URL}"
+CRICKET_CHATBOT_URL = "${CRICKET_CHATBOT_URL}"
 
 # Worker configuration
 [build]

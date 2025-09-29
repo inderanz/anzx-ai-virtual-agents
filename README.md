@@ -2,12 +2,23 @@
 
 Advanced AI assistants, freeing up human entrepreneurs to focus on strategic work.
 
+## 🚀 **PRODUCTION READY** - Cricket Agent Live
+
+### **Live Services**
+- **Cricket Agent**: https://cricket-agent-aa5gcxefza-ts.a.run.app ✅
+- **Cricket Bridge**: https://cricket-bridge-aa5gcxefza-ts.a.run.app ✅  
+- **Cricket Chatbot**: https://anzx.ai/cricket ✅
+- **API Documentation**: https://cricket-agent-aa5gcxefza-ts.a.run.app/docs ✅
+
 ## Architecture
 
 The ANZx.ai platform is built as a cloud-native microservices architecture with the following components:
 
 ### Services
 
+- **Cricket Agent** (`services/cricket-agent/`) - AI-powered cricket information service ✅ **LIVE**
+- **Cricket Bridge** (`services/cricket-bridge/`) - WhatsApp integration service ✅ **LIVE**
+- **Cricket Chatbot** (`services/cricket-marketing/`) - Enterprise-grade web interface ✅ **LIVE**
 - **Core API** (`services/core-api/`) - FastAPI service handling authentication, billing, and core business logic
 - **Agent Orchestration** (`services/agent-orchestration/`) - AI agent management and conversation routing
 - **Knowledge Service** (`services/knowledge-service/`) - Document processing, embeddings, and RAG system

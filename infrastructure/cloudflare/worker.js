@@ -1,11 +1,12 @@
 /**
- * Cloudflare Worker for Cricket Agent Proxy
+ * Cloudflare Worker for Cricket Agent Proxy and Chatbot
  * Proxies /api/cricket/* requests to cricket-agent Cloud Run service
+ * Serves cricket chatbot at /cricket route
  */
 
 // CORS configuration
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': 'https://anzx.ai',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
   'Access-Control-Max-Age': '86400',
@@ -57,6 +58,72 @@ export default {
     // Handle CORS preflight for /api/cricket/* routes
     if (request.method === 'OPTIONS' && pathname.startsWith('/api/cricket')) {
       return handleCorsPreflight();
+    }
+    
+    // Serve cricket chatbot at /cricket route and static assets
+    if (pathname === '/cricket' || pathname.startsWith('/cricket/') || pathname.startsWith('/_next/') || pathname.startsWith('/images/')) {
+      try {
+        // Redirect to Cloudflare Pages deployment
+        const chatbotUrl = env.CRICKET_CHATBOT_URL || 'https://b80389c8.anzx-cricket.pages.dev';
+        let targetPath;
+        
+        if (pathname === '/cricket') {
+          targetPath = '/';
+        } else if (pathname.startsWith('/cricket/')) {
+          targetPath = pathname.replace('/cricket', '');
+        } else {
+          // For static assets like /_next/ and /images/, use the path as-is
+          targetPath = pathname;
+        }
+        
+        const targetUrl = `${chatbotUrl}${targetPath}${url.search}`;
+        
+        console.log('Proxying to:', targetUrl);
+        
+        // Fetch from Cloudflare Pages with proper headers
+        const response = await fetch(targetUrl, {
+          method: request.method,
+          headers: {
+            'User-Agent': request.headers.get('User-Agent') || 'Cloudflare-Worker',
+            'Accept': request.headers.get('Accept') || '*/*',
+            'Accept-Language': request.headers.get('Accept-Language') || 'en-US,en;q=0.9',
+            'Accept-Encoding': request.headers.get('Accept-Encoding') || 'gzip, deflate, br',
+            'Cache-Control': 'no-cache',
+          },
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+        
+        // Create new response with proper headers
+        const newResponse = new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: {
+            ...Object.fromEntries(response.headers.entries()),
+            ...CORS_HEADERS,
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          },
+        });
+        
+        return newResponse;
+        
+      } catch (error) {
+        console.error('Chatbot proxy error:', error);
+        return new Response(JSON.stringify({ 
+          error: 'Chatbot proxy error', 
+          message: error.message,
+          targetUrl: targetUrl 
+        }), {
+          status: 502,
+          headers: {
+            'Content-Type': 'application/json',
+            ...CORS_HEADERS,
+          },
+        });
+      }
     }
     
     // Proxy /api/cricket/* requests to cricket-agent

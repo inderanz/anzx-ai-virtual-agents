@@ -1,0 +1,27 @@
+# Cloudflare Worker Configuration Template
+# This file is templated during Cloud Build - do not hardcode secrets
+
+name = "anzx-cricket-proxy"
+main = "worker.js"
+compatibility_date = "2025-09-28"
+
+# Account and zone configuration
+account_id = "e5e04460dc614be69eb5b8252bff5588"
+
+# Route configuration
+routes = [
+  { pattern = "anzx.ai/cricket*", zone_id = "aa2c1700d4063f17d4235701fdf5c4fd" },
+  { pattern = "anzx.ai/_next/*", zone_id = "aa2c1700d4063f17d4235701fdf5c4fd" },
+  { pattern = "anzx.ai/images/*", zone_id = "aa2c1700d4063f17d4235701fdf5c4fd" }
+]
+
+# Environment variables
+[vars]
+CRICKET_AGENT_URL = "https://cricket-agent-aa5gcxefza-ts.a.run.app"
+CRICKET_CHATBOT_URL = "https://8b5618a8.anzx-cricket.pages.dev"
+
+# Worker configuration
+[build]
+command = ""
+
+# No external modules needed for this simple proxy

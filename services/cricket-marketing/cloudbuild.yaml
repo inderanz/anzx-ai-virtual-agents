@@ -1,0 +1,42 @@
+steps:
+  # Install dependencies
+  - name: 'node:20'
+    entrypoint: 'npm'
+    args: ['ci']
+    dir: 'services/cricket-marketing'
+
+  # Build the application
+  - name: 'node:20'
+    entrypoint: 'npm'
+    args: ['run', 'build']
+    dir: 'services/cricket-marketing'
+
+  # Deploy to Cloudflare Pages
+  - name: 'node:20'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        cd services/cricket-marketing
+        npm install -g wrangler@latest
+        
+        # Read secrets from Secret Manager
+        CLOUDFLARE_API_TOKEN="$(gcloud secrets versions access latest --secret=CLOUDFLARE_API_TOKEN)"
+        CLOUDFLARE_ACCOUNT_ID="$(gcloud secrets versions access latest --secret=CLOUDFLARE_ACCOUNT_ID)"
+        
+        # Set environment variables for wrangler
+        export CLOUDFLARE_API_TOKEN
+        export CLOUDFLARE_ACCOUNT_ID
+        
+        # Deploy to Cloudflare Pages
+        wrangler pages deploy .next --project-name=anzx-cricket --branch=main
+        
+        # Clean up environment variables
+        unset CLOUDFLARE_API_TOKEN
+        unset CLOUDFLARE_ACCOUNT_ID
+
+# Store build artifacts
+artifacts:
+  objects:
+    location: 'gs://anzx-deploy-state/artifacts/cricket-marketing'
+    paths: ['services/cricket-marketing/.next/**']

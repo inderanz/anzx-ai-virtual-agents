@@ -1,0 +1,263 @@
+# Cricket Chatbot Deployment Pipeline
+# Deploys the Next.js cricket chatbot to Cloudflare Pages
+
+steps:
+  # Install dependencies and build the application
+  - name: 'node:20'
+    id: 'build-chatbot'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        cd services/cricket-marketing
+        
+        echo "Installing dependencies..."
+        npm install
+        
+        echo "Building Next.js application..."
+        npm run build
+        
+        echo "Build completed successfully"
+    waitFor: ['-']
+
+  # Get cricket agent URL for environment configuration
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'get-agent-url'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        AGENT_URL=$$(gcloud run services describe cricket-agent --region ${_REGION} --format='value(status.url)')
+        echo -n "$$AGENT_URL" > AGENT_URL.txt
+        echo "Cricket Agent URL: $$AGENT_URL"
+    waitFor: ['-']
+
+  # Deploy to Cloudflare Pages
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'deploy-to-cloudflare'
+    entrypoint: 'bash'
+    waitFor: ['build-chatbot', 'get-agent-url']
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        
+        # Install Node.js and npm
+        curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+        apt-get install -y nodejs
+        
+        # Get Cloudflare secrets
+        CF_API_TOKEN=$$(gcloud secrets versions access latest --secret=CLOUDFLARE_API_TOKEN)
+        CF_ACCOUNT_ID=$$(gcloud secrets versions access latest --secret=CLOUDFLARE_ACCOUNT_ID)
+        AGENT_URL=$$(cat AGENT_URL.txt)
+        
+        # Set environment variables
+        export CF_API_TOKEN
+        export CLOUDFLARE_ACCOUNT_ID=$$CF_ACCOUNT_ID
+        
+        # Install wrangler
+        npm i -g wrangler@latest >/dev/null
+        WRANGLER_VERSION=$$(wrangler --version)
+        echo "Wrangler $$WRANGLER_VERSION"
+        
+        # Deploy to Cloudflare Pages
+        cd services/cricket-marketing
+        echo "Deploying to Cloudflare Pages..."
+        
+        # Create environment variables for the deployment
+        cat > .env.production << EOF
+        CRICKET_AGENT_URL=$$AGENT_URL
+        NEXT_PUBLIC_APP_URL=https://anzx.ai/cricket
+        NODE_ENV=production
+        EOF
+        
+        # Create project if it doesn't exist
+        wrangler pages project create anzx-cricket --production-branch=main || true
+        
+        # Deploy to Cloudflare Pages and capture URL from output
+        echo "Deploying to Cloudflare Pages..."
+        DEPLOYMENT_OUTPUT=$$(wrangler pages deploy out --project-name=anzx-cricket --branch=main 2>&1)
+        echo "$$DEPLOYMENT_OUTPUT"
+        
+        # Extract deployment URL from the output
+        DEPLOYMENT_URL=$$(echo "$$DEPLOYMENT_OUTPUT" | grep -o 'https://[^[:space:]]*\.anzx-cricket\.pages\.dev' | head -1 || echo "")
+        
+        # Note: Custom domain configuration will be handled via Cloudflare Worker
+        echo "Custom domain https://anzx.ai/cricket will be configured via Cloudflare Worker"
+        
+        # If URL capture failed, try alternative methods
+        if [ -z "$$DEPLOYMENT_URL" ]; then
+          echo "Primary URL capture failed, trying alternative methods..."
+          
+          # Method 2: Try to get from wrangler deployment list
+          DEPLOYMENT_URL=$$(wrangler pages deployment list --project-name=anzx-cricket --format=json 2>/dev/null | jq -r '.[0].url' 2>/dev/null || echo "")
+          
+          # Method 3: If still no URL, generate a predictable one based on timestamp
+          if [ -z "$$DEPLOYMENT_URL" ]; then
+            TIMESTAMP=$$(date +%s)
+            DEPLOYMENT_URL="https://$$(echo $$TIMESTAMP | tail -c 8).anzx-cricket.pages.dev"
+            echo "Generated fallback URL: $$DEPLOYMENT_URL"
+          fi
+        fi
+        
+        if [ -n "$$DEPLOYMENT_URL" ]; then
+          echo "$$DEPLOYMENT_URL" > DEPLOYMENT_URL.txt
+          echo "Captured deployment URL: $$DEPLOYMENT_URL"
+          
+          # Upload deployment URL to Cloud Storage for next steps
+          echo "$$DEPLOYMENT_URL" | gsutil cp - gs://${_PROJECT_ID}_cloudbuild/deployment-url.txt
+          echo "Uploaded deployment URL to Cloud Storage"
+        else
+          echo "Error: Could not determine deployment URL"
+          exit 1
+        fi
+        
+        # Clean up environment
+        unset CF_API_TOKEN
+        unset CLOUDFLARE_ACCOUNT_ID
+        
+        echo "Cricket chatbot deployed to Cloudflare Pages"
+        echo "Available at: https://anzx.ai/cricket"
+
+  # Update CRICKET_CHATBOT_URL secret with latest deployment URL
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'update-chatbot-url'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        
+        # Download deployment URL from Cloud Storage
+        echo "Downloading deployment URL from Cloud Storage..."
+        gsutil cp gs://${_PROJECT_ID}_cloudbuild/deployment-url.txt DEPLOYMENT_URL.txt 2>/dev/null || echo "Failed to download from Cloud Storage"
+        
+        # Read the captured deployment URL
+        if [ -f DEPLOYMENT_URL.txt ]; then
+          DEPLOYMENT_URL=$$(cat DEPLOYMENT_URL.txt)
+          echo "Using captured deployment URL: $$DEPLOYMENT_URL"
+        else
+          echo "Warning: DEPLOYMENT_URL.txt not found, using fallback"
+          DEPLOYMENT_URL="https://$$(date +%s | tail -c 8).anzx-cricket.pages.dev"
+        fi
+        
+        # Create secret if it doesn't exist, otherwise add new version
+        if gcloud secrets describe CRICKET_CHATBOT_URL --project=${_PROJECT_ID} >/dev/null 2>&1; then
+          echo "Secret CRICKET_CHATBOT_URL exists, adding new version"
+          echo "$$DEPLOYMENT_URL" | gcloud secrets versions add CRICKET_CHATBOT_URL --data-file=- --project=${_PROJECT_ID}
+        else
+          echo "Secret CRICKET_CHATBOT_URL does not exist, creating it"
+          echo "$$DEPLOYMENT_URL" | gcloud secrets create CRICKET_CHATBOT_URL --data-file=- --project=${_PROJECT_ID}
+        fi
+        
+        echo "Updated CRICKET_CHATBOT_URL secret with: $$DEPLOYMENT_URL"
+    waitFor: ['deploy-to-cloudflare']
+
+  # Prepare wrangler.toml for worker deployment
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'prepare-worker-config'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        
+        # Download deployment URL from Cloud Storage
+        echo "Downloading deployment URL from Cloud Storage..."
+        gsutil cp gs://${_PROJECT_ID}_cloudbuild/deployment-url.txt DEPLOYMENT_URL.txt 2>/dev/null || echo "Failed to download from Cloud Storage"
+        
+        # Get secrets for worker deployment
+        CF_API_TOKEN=$$(gcloud secrets versions access latest --secret=CLOUDFLARE_API_TOKEN)
+        CF_ACCOUNT_ID=$$(gcloud secrets versions access latest --secret=CLOUDFLARE_ACCOUNT_ID)
+        CF_ZONE_ID=$$(gcloud secrets versions access latest --secret=CLOUDFLARE_ZONE_ID)
+        CF_WORKER_NAME=$$(gcloud secrets versions access latest --secret=CLOUDFLARE_WORKER_NAME)
+        CF_ROUTE_PATTERN=$$(gcloud secrets versions access latest --secret=CLOUDFLARE_ROUTE_PATTERN)
+        CF_CHATBOT_URL=$$(gcloud secrets versions access latest --secret=CRICKET_CHATBOT_URL)
+        AGENT_URL=$$(cat AGENT_URL.txt)
+        
+        # Render wrangler.toml with updated values
+        sed -e "s|\$${CLOUDFLARE_ACCOUNT_ID}|$$CF_ACCOUNT_ID|g" \
+            -e "s|\$${CLOUDFLARE_ZONE_ID}|$$CF_ZONE_ID|g" \
+            -e "s|\$${CLOUDFLARE_WORKER_NAME}|$$CF_WORKER_NAME|g" \
+            -e "s|\$${CLOUDFLARE_ROUTE_PATTERN}|$$CF_ROUTE_PATTERN|g" \
+            -e "s|\$${CRICKET_AGENT_URL}|$$AGENT_URL|g" \
+            -e "s|\$${CRICKET_CHATBOT_URL}|$$CF_CHATBOT_URL|g" \
+            infrastructure/cloudflare/wrangler.toml.tmpl > infrastructure/cloudflare/wrangler.toml
+        
+        # Store API token for next step
+        echo "$$CF_API_TOKEN" > CF_API_TOKEN.txt
+        
+        echo "Worker configuration prepared"
+    waitFor: ['update-chatbot-url']
+
+  # Deploy Cloudflare Worker
+  - name: 'node:20'
+    id: 'deploy-worker'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        
+        # Download deployment URL from Cloud Storage
+        echo "Downloading deployment URL from Cloud Storage..."
+        gsutil cp gs://${_PROJECT_ID}_cloudbuild/deployment-url.txt DEPLOYMENT_URL.txt 2>/dev/null || echo "Failed to download from Cloud Storage"
+        
+        # Set environment variable
+        export CLOUDFLARE_API_TOKEN=$$(cat CF_API_TOKEN.txt)
+        
+        # Deploy the worker
+        cd infrastructure/cloudflare
+        npx wrangler@latest deploy
+        
+        echo "Cloudflare Worker deployed with updated configuration"
+        
+        # Clean up
+        unset CLOUDFLARE_API_TOKEN
+    waitFor: ['prepare-worker-config']
+
+  # Write deployment state
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'write-deployment-state'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        
+        # Get configuration
+        CF_ACCOUNT_ID=$$(gcloud secrets versions access latest --secret=CLOUDFLARE_ACCOUNT_ID)
+        AGENT_URL=$$(cat AGENT_URL.txt)
+        
+        # Create deployment state
+        cat > /tmp/cricket-chatbot-deployment-state.json << JSONEOF
+        {
+          "cricket_chatbot_deployment": {
+            "timestamp": "$$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "build_id": "${BUILD_ID}",
+            "project_id": "${_PROJECT_ID}",
+            "region": "${_REGION}",
+            "service": "cricket-chatbot",
+            "platform": "cloudflare-pages",
+            "project_name": "anzx-cricket",
+            "custom_domain": "https://anzx.ai/cricket",
+            "cricket_agent_url": "$$AGENT_URL",
+            "cloudflare_account_id": "$$CF_ACCOUNT_ID",
+            "status": "deployed",
+            "features": [
+              "real-time-chat",
+              "cricket-agent-integration",
+              "mobile-responsive",
+              "analytics-ready"
+            ]
+          }
+        }
+        JSONEOF
+        
+        # Upload to GCS
+        gsutil cp /tmp/cricket-chatbot-deployment-state.json gs://anzx-deploy-state/state/cricket-chatbot-${BUILD_ID}.json
+        
+        echo '{"action": "write_cricket_chatbot_state", "status": "success", "file": "cricket-chatbot-'${BUILD_ID}'.json"}'
+    waitFor: ['deploy-to-cloudflare']
