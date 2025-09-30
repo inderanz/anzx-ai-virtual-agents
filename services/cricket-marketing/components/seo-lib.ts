@@ -12,15 +12,15 @@ export interface SEOData {
 }
 
 export const cricketSEO: SEOData = {
-  title: 'ANZX Cricket Agent - AI-Powered Cricket Assistant | Caroline Springs Cricket Club',
-  description: 'Get instant answers about fixtures, players, ladder positions, and more with our AI-powered cricket assistant. 24/7 availability for Caroline Springs Cricket Club.',
+  title: 'ANZX Cricket Agent - AI-Powered Cricket Assistant | A Leading Cricket Club',
+  description: 'Get instant answers about fixtures, players, ladder positions, and more with our AI-powered cricket assistant. 24/7 availability for A Leading Cricket Club.',
   keywords: [
     'cricket assistant',
     'AI cricket',
     'cricket fixtures',
     'cricket ladder',
     'cricket statistics',
-    'Caroline Springs Cricket Club',
+    'A Leading Cricket Club',
     'cricket AI agent',
     'cricket information',
     'cricket queries'
@@ -33,7 +33,7 @@ export const cricketStructuredData = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "ANZX Cricket Agent",
-  "description": "AI-powered cricket assistant for Caroline Springs Cricket Club",
+  "description": "AI-powered cricket assistant for A Leading Cricket Club",
   "applicationCategory": "SportsApplication",
   "operatingSystem": "Web",
   "offers": {
@@ -64,7 +64,7 @@ export const faqStructuredData = {
       "name": "What can the ANZX Cricket Agent help with?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "The ANZX Cricket Agent can help with player information, fixtures, ladder positions, team rosters, and match statistics for Caroline Springs Cricket Club."
+        "text": "The ANZX Cricket Agent can help with player information, fixtures, ladder positions, team rosters, and match statistics for A Leading Cricket Club."
       }
     },
     {

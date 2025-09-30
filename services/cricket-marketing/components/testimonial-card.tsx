@@ -29,12 +29,12 @@ export function TestimonialCard() {
           <div className="club-logo">
             <img 
               src="/images/club-logo-placeholder.svg" 
-              alt="Caroline Springs Cricket Club" 
+              alt="A Leading Cricket Club" 
               className="club-logo-img"
             />
           </div>
           <div className="attribution-text">
-            <div className="club-name">Caroline Springs Cricket Club</div>
+            <div className="club-name">A Leading Cricket Club</div>
             <div className="club-role">Team Management</div>
           </div>
         </motion.div>

@@ -70,7 +70,7 @@ export function ChatPreviewCard({ onTryAgent, onWatchDemo }: ChatPreviewCardProp
         </div>
         <div className="chat-preview-info">
           <h4>Cricket Assistant</h4>
-          <p>Caroline Springs Cricket Club</p>
+          <p>A Leading Cricket Club</p>
         </div>
         <div className="chat-preview-status">
           <div className="status-dot online"></div>

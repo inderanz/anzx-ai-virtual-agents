@@ -41,7 +41,7 @@ export function ChatDock({ isFullPage = false, onToggleFullPage }: ChatDockProps
       const welcomeMessage: Message = {
         id: 1,
         type: 'ai',
-        content: `Hello! I'm your cricket assistant for Caroline Springs Cricket Club. I can help you with:
+        content: `Hello! I'm your cricket assistant for A Leading Cricket Club. I can help you with:
 
 **Player Information:** "Which team is John Smith in?"
 **Player Stats:** "How many runs did Jane Doe score last match?"
@@ -251,7 +251,7 @@ What would you like to know?`,
           </div>
           <div className="chat-dock-info">
             <h3>Cricket Assistant</h3>
-            <p>Caroline Springs Cricket Club</p>
+            <p>A Leading Cricket Club</p>
           </div>
         </div>
         <div className="chat-dock-actions">

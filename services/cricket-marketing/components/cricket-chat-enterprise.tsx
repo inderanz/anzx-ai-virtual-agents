@@ -8,6 +8,7 @@ import { ChatDockWrapper } from '@/components/chat-dock-wrapper'
 import { AnimatedHeadline } from '@/components/animated-headline'
 import { MetricsRow } from '@/components/metrics-row'
 import { TestimonialCard } from '@/components/testimonial-card'
+import { AnimatedCounter } from '@/components/animated-counter'
 import { motion } from 'framer-motion'
 import { animationPresets } from './motion-lib'
 import { LazySection } from './lazy-section'
@@ -109,7 +110,7 @@ export function CricketChatEnterprise() {
               transition={{ delay: 0.2 }}
             >
               <span className="badge-icon">🏏</span>
-              <span>Caroline Springs Cricket Club</span>
+              <span>Australia Cricket Clubs</span>
             </motion.div>
             <h1 className="cricket-title">
               <AnimatedHeadline 
@@ -130,12 +131,16 @@ export function CricketChatEnterprise() {
               transition={{ delay: 0.6 }}
             >
               <motion.div className="stat-item" {...animationPresets.card}>
-                <div className="stat-number">6</div>
-                <div className="stat-label">Canonical Queries</div>
-              </motion.div>
-              <motion.div className="stat-item" {...animationPresets.card}>
-                <div className="stat-number">2</div>
-                <div className="stat-label">Teams</div>
+              <div className="stat-number">
+                <AnimatedCounter end={24} duration={2} />
+              </div>
+              <div className="stat-label">Canonical Queries</div>
+            </motion.div>
+            <motion.div className="stat-item" {...animationPresets.card}>
+              <div className="stat-number">
+                <AnimatedCounter end={8} duration={2.5} />
+              </div>
+              <div className="stat-label">Teams</div>
               </motion.div>
               <motion.div className="stat-item" {...animationPresets.card}>
                 <div className="stat-number">24/7</div>
