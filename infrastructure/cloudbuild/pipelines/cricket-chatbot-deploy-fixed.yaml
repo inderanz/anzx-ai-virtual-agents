@@ -29,7 +29,7 @@ steps:
       - '-c'
       - |
         set -euo pipefail
-        AGENT_URL=$$(gcloud run services describe cricket-agent --region ${_REGION} --format='value(status.url)')
+        AGENT_URL=$$(gcloud run services describe cricket-agent --region australia-southeast1 --format='value(status.url)')
         echo -n "$$AGENT_URL" > AGENT_URL.txt
         echo "Cricket Agent URL: $$AGENT_URL"
     waitFor: ['-']

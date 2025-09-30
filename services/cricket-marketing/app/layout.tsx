@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
+import { cricketSEO, generateMetaTags } from "../components/seo-lib"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -8,10 +9,7 @@ const inter = Inter({
   display: "swap",
 })
 
-export const metadata: Metadata = {
-  title: "ANZx Cricket Agent",
-  description: "AI-powered cricket information system for Australian cricket clubs. Real-time fixtures, ladders, player stats, and WhatsApp integration.",
-}
+export const metadata: Metadata = generateMetaTags(cricketSEO)
 
 export default function RootLayout({
   children,

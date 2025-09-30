@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { X, Cookie, Shield, Settings } from "lucide-react"
-import { Button } from "@/components/ui/button"
+
 
 export function ConsentBanner() {
   const [showBanner, setShowBanner] = useState(false)
@@ -72,25 +72,24 @@ export function ConsentBanner() {
           </div>
           
           <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={handleReject}
-              className="text-muted-foreground hover:text-foreground"
+              className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground rounded-md hover:bg-muted/50 transition-colors"
             >
               Reject All
-            </Button>
-            <Button size="sm" onClick={handleAccept}>
+            </button>
+            <button
+              onClick={handleAccept}
+              className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+            >
               Accept All
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
+            </button>
+            <button
               onClick={handleClose}
-              className="text-muted-foreground hover:text-foreground"
+              className="p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted/50 transition-colors"
             >
               <X className="h-4 w-4" />
-            </Button>
+            </button>
           </div>
         </div>
       </div>

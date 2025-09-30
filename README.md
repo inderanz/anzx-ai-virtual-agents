@@ -26,6 +26,13 @@ The ANZx.ai platform is built as a cloud-native microservices architecture with 
 
 ### Infrastructure
 
+- **Google Cloud Platform** - Production deployment on GCP ✅
+- **Cloud Run** - Serverless containerized services ✅
+- **Cloudflare Pages** - Static site hosting with custom domain ✅
+- **Cloudflare Worker** - Custom domain proxy and routing ✅
+- **Cloud Build** - Fully automated CI/CD pipeline ✅
+- **Cloud Storage** - File transfer between build steps ✅
+- **Secret Manager** - Secure configuration management ✅
 - **PostgreSQL with pgvector** - Primary database with vector embeddings support
 - **Redis** - Caching and message queuing
 - **Docker & Docker Compose** - Containerized development and deployment
@@ -113,17 +120,35 @@ make db-migrate
 make db-reset
 ```
 
-## Production Deployment
+## Production Deployment ✅ **LIVE**
 
-The platform is designed for deployment on Google Cloud Platform using:
+The platform is deployed on Google Cloud Platform with fully automated CI/CD:
 
-- **Cloud Run** - Containerized service deployment
+### **Cricket Agent Deployment**
+```bash
+# Deploy cricket chatbot (fully automated)
+gcloud builds submit --config=infrastructure/cloudbuild/pipelines/cricket-chatbot-deploy-fixed.yaml \
+  --substitutions=_PROJECT_ID=virtual-stratum-473511-u5,_REGION=australia-southeast1
+```
+
+### **Infrastructure Components**
+- **Cloud Run** - Containerized service deployment ✅
+- **Cloudflare Pages** - Static site hosting ✅
+- **Cloudflare Worker** - Custom domain proxy ✅
+- **Cloud Build** - Fully automated CI/CD pipeline ✅
+- **Cloud Storage** - File transfer between build steps ✅
+- **Secret Manager** - Secure configuration management ✅
 - **Cloud SQL** - Managed PostgreSQL with pgvector
-- **Cloud Storage** - Document and asset storage
-- **Cloud Build** - CI/CD pipeline
 - **Cloud Monitoring** - Observability and alerting
 
-See the infrastructure specifications in `.kiro/specs/anzx-ai-platform/design.md` for detailed deployment architecture.
+### **Deployment Features**
+- **Zero Manual Intervention**: Complete end-to-end automation
+- **Cloud Storage Integration**: URL capture and transfer between build steps
+- **Automatic Secret Management**: CRICKET_CHATBOT_URL updated automatically
+- **Custom Domain**: https://anzx.ai/cricket working with Cloudflare Worker
+- **Enterprise UI/UX**: Professional-grade interface with modern styling
+
+See `docs/STATUS.md` for current deployment status and `docs/tasks.md` for implementation details.
 
 ## Contributing
 

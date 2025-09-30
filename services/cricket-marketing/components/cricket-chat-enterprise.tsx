@@ -1,116 +1,77 @@
 "use client"
 
-import React, { useState, useRef, useEffect } from 'react'
-import { Activity, Send, Trophy, Users, Calendar, BarChart3, Clock, List } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Trophy, Users, Calendar, BarChart3, Clock } from 'lucide-react'
+import { ChatPreviewCard } from '@/components/chat-preview-card'
+import { TrustBadges } from '@/components/trust-badges'
+import { ChatDockWrapper } from '@/components/chat-dock-wrapper'
+import { AnimatedHeadline } from '@/components/animated-headline'
+import { MetricsRow } from '@/components/metrics-row'
+import { TestimonialCard } from '@/components/testimonial-card'
+import { motion } from 'framer-motion'
+import { animationPresets } from './motion-lib'
+import { LazySection } from './lazy-section'
+import { useAnalytics } from './analytics-lib'
 
 export function CricketChatEnterprise() {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      type: 'ai',
-      content: `Hello! I'm your cricket assistant for Caroline Springs Cricket Club. I can help you with:
+  const analytics = useAnalytics()
+  const [showDemoCTA, setShowDemoCTA] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
 
-**Player Information:** "Which team is John Smith in?"
-**Player Stats:** "How many runs did Jane Doe score last match?"
-**Fixtures:** "List all fixtures for Caroline Springs Blue U10"
-**Ladder Position:** "Where are Caroline Springs Blue U10 on the ladder?"
-**Next Match:** "When is the next game for Caroline Springs White U10?"
-**Team Roster:** "Who are the players for Caroline Springs Blue U10?"
-
-What would you like to know?`,
-      timestamp: 'Just now'
-    }
-  ])
-  const [inputValue, setInputValue] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
+  // Handle scroll for sticky header
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
-
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return
-
-    const userMessage = {
-      id: Date.now(),
-      type: 'user',
-      content: inputValue,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 80)
     }
 
-    setMessages(prev => [...prev, userMessage])
-    setInputValue('')
-    setIsLoading(true)
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
-    try {
-      const response = await fetch('https://cricket-agent-7x6g2q3xaq-uc.a.run.app/ask', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: inputValue,
-          session_id: 'web-chat'
-        })
-      })
 
-      const data = await response.json()
-      
-      const aiMessage = {
-        id: Date.now() + 1,
-        type: 'ai',
-        content: data.response || 'Sorry, I couldn\'t process your request. Please try again.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }
+  const handleTryAgent = () => {
+    // Open full chat page
+    window.location.href = '/cricket/chat'
+  }
 
-      setMessages(prev => [...prev, aiMessage])
-    } catch (error) {
-      console.error('Error calling cricket agent:', error)
-      const errorMessage = {
-        id: Date.now() + 1,
-        type: 'ai',
-        content: 'Sorry, I\'m having trouble connecting to the cricket database. Please try again later.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }
-      setMessages(prev => [...prev, errorMessage])
-    } finally {
-      setIsLoading(false)
+  const handleWatchDemo = () => {
+    // Open demo modal (placeholder for now)
+    alert('Demo video will open here. This is a placeholder for the 60-second demo modal.')
+  }
+
+  const handleDemoChip = async (query: string) => {
+    // Scroll to features section
+    const featuresSection = document.querySelector('[data-testid="cricket-features"]')
+    if (featuresSection) {
+      featuresSection.scrollIntoView({ behavior: 'smooth' })
     }
+    
+    // Show CTA after demo
+    setTimeout(() => {
+      setShowDemoCTA(true)
+    }, 1000)
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
+  const handleConnectClub = () => {
+    // Scroll to features section
+    const featuresSection = document.querySelector('[data-testid="cricket-features"]')
+    if (featuresSection) {
+      featuresSection.scrollIntoView({ behavior: 'smooth' })
     }
+    
+    // Show contact information
+    alert('To connect your club data, please contact our support team at support@anzx.ai or call us at (03) 1234 5678. We\'ll help you set up real-time data integration for your cricket club.')
   }
 
-  const handleSuggestionClick = (query: string) => {
-    setInputValue(query)
-    inputRef.current?.focus()
-  }
-
-  const suggestions = [
-    { query: "List all fixtures for Caroline Springs Blue U10", label: "Fixtures", icon: Calendar },
-    { query: "Where are Caroline Springs Blue U10 on the ladder?", label: "Ladder", icon: BarChart3 },
-    { query: "Who are the players for Caroline Springs Blue U10?", label: "Players", icon: Users },
-    { query: "When is the next game for Caroline Springs White U10?", label: "Next Match", icon: Clock }
-  ]
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
-      <nav className="navbar">
+      <nav className={`navbar ${isScrolled ? 'navbar-scrolled' : ''}`}>
         <div className="nav-container">
           <div className="nav-logo">
             <a href="/">
-              <img src="/images/logo.svg" alt="ANZx.ai" className="logo" />
+              <img src="/images/anzx-logo.png" alt="ANZX.ai" className="logo" />
             </a>
           </div>
           <div className="nav-menu" id="nav-menu">
@@ -124,7 +85,7 @@ What would you like to know?`,
             </div>
             <div className="nav-actions">
               <a href="/auth/login" className="nav-link nav-login">Sign In</a>
-              <a href="/auth/register" className="btn btn-primary nav-cta">Get Started</a>
+              <a href="/auth/register" className={`btn ${isScrolled ? 'btn-primary' : 'btn-outline'} nav-cta`}>Get Started</a>
             </div>
           </div>
           <div className="nav-toggle" id="nav-toggle">
@@ -136,145 +97,91 @@ What would you like to know?`,
       </nav>
 
       {/* Cricket Agent Header */}
-      <section className="cricket-header">
+      <section className="cricket-header" data-testid="cricket-hero">
         <div className="container">
-          <div className="cricket-header-content">
-            <div className="cricket-badge">
+          <motion.div 
+            className="cricket-header-content"
+            {...animationPresets.hero}
+          >
+            <motion.div 
+              className="cricket-badge"
+              {...animationPresets.fadeIn}
+              transition={{ delay: 0.2 }}
+            >
               <span className="badge-icon">🏏</span>
               <span>Caroline Springs Cricket Club</span>
-            </div>
+            </motion.div>
             <h1 className="cricket-title">
-              Intelligent <span className="cricket-gradient-text">Cricket Assistant</span>
+              <AnimatedHeadline 
+                speedMs={1800}
+              />
             </h1>
-            <p className="cricket-description">
-              Get real-time information about fixtures, players, ladder positions, and more. 
-              Ask questions in natural language and get instant, accurate responses.
-            </p>
-            <div className="cricket-stats">
-              <div className="stat-item">
+            <motion.p 
+              className="cricket-description-enhanced"
+              {...animationPresets.slideUp}
+              transition={{ delay: 0.4 }}
+            >
+              Get real-time information about <strong>fixtures</strong>, <strong>players</strong>, <strong>ladder positions</strong>, and more. 
+              Ask questions in natural language and get <strong>instant, accurate responses</strong>.
+            </motion.p>
+            <motion.div 
+              className="cricket-stats"
+              {...animationPresets.stagger}
+              transition={{ delay: 0.6 }}
+            >
+              <motion.div className="stat-item" {...animationPresets.card}>
                 <div className="stat-number">6</div>
                 <div className="stat-label">Canonical Queries</div>
-              </div>
-              <div className="stat-item">
+              </motion.div>
+              <motion.div className="stat-item" {...animationPresets.card}>
                 <div className="stat-number">2</div>
                 <div className="stat-label">Teams</div>
-              </div>
-              <div className="stat-item">
+              </motion.div>
+              <motion.div className="stat-item" {...animationPresets.card}>
                 <div className="stat-number">24/7</div>
                 <div className="stat-label">Available</div>
-              </div>
-            </div>
-          </div>
+              </motion.div>
+            </motion.div>
+            
+            {/* Chat Preview Card */}
+            <motion.div
+              {...animationPresets.slideUp}
+              transition={{ delay: 0.8 }}
+            >
+              <ChatPreviewCard 
+                onTryAgent={handleTryAgent}
+                onWatchDemo={handleWatchDemo}
+              />
+            </motion.div>
+            
+            {/* Trust Badges */}
+            <motion.div
+              {...animationPresets.fadeIn}
+              transition={{ delay: 1.0 }}
+            >
+              <TrustBadges variant="hero" />
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Cricket Chat Interface */}
-      <section className="cricket-chat">
+      {/* Metrics Row */}
+      <LazySection className="metrics-section">
         <div className="container">
-          <div className="chat-container">
-            <div className="chat-header">
-              <div className="chat-title">
-                <div className="chat-avatar">
-                  <span className="avatar-icon">🏏</span>
-                </div>
-                <div className="chat-info">
-                  <h3>Cricket Assistant</h3>
-                  <p>Caroline Springs Cricket Club</p>
-                </div>
-              </div>
-              <div className="chat-status">
-                <div className="status-indicator online"></div>
-                <span>Online</span>
-              </div>
-            </div>
-            
-            <div className="chat-messages" id="chat-messages">
-              {messages.map((message) => (
-                <div key={message.id} className={`message ${message.type === 'user' ? 'user-message' : 'ai-message'}`}>
-                  <div className="message-avatar">
-                    <span className="avatar-icon">{message.type === 'user' ? '👤' : '🏏'}</span>
-                  </div>
-                  <div className="message-content">
-                    <div className="message-text">
-                      {message.content.split('\n').map((line, index) => {
-                        if (line.startsWith('**') && line.endsWith('**')) {
-                          return <p key={index}><strong>{line.slice(2, -2)}</strong></p>
-                        }
-                        if (line.trim() === '') {
-                          return <br key={index} />
-                        }
-                        return <p key={index}>{line}</p>
-                      })}
-                    </div>
-                    <div className="message-time">{message.timestamp}</div>
-                  </div>
-                </div>
-              ))}
-              {isLoading && (
-                <div className="message ai-message">
-                  <div className="message-avatar">
-                    <span className="avatar-icon">🏏</span>
-                  </div>
-                  <div className="message-content">
-                    <div className="message-typing">
-                      <span>Cricket Assistant is typing</span>
-                      <div className="typing-dots">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-            
-            <div className="chat-input-container">
-              <div className="chat-input-wrapper">
-                <input 
-                  ref={inputRef}
-                  type="text" 
-                  id="chat-input" 
-                  className="chat-input" 
-                  placeholder="Ask about fixtures, players, ladder positions..."
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  disabled={isLoading}
-                  autoComplete="off"
-                />
-                <button 
-                  id="send-button" 
-                  className="send-button" 
-                  onClick={handleSendMessage}
-                  disabled={!inputValue.trim() || isLoading}
-                >
-                  <Send size={20} />
-                </button>
-              </div>
-              <div className="chat-suggestions" id="chat-suggestions">
-                {suggestions.map((suggestion, index) => {
-                  const IconComponent = suggestion.icon
-                  return (
-                    <button 
-                      key={index}
-                      className="suggestion-btn" 
-                      onClick={() => handleSuggestionClick(suggestion.query)}
-                    >
-                      <IconComponent size={16} />
-                      {suggestion.label}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
+          <MetricsRow />
         </div>
-      </section>
+      </LazySection>
+
+      {/* Testimonial Section */}
+      <LazySection className="testimonial-section">
+        <div className="container">
+          <TestimonialCard />
+        </div>
+      </LazySection>
+
 
       {/* Cricket Features */}
-      <section className="cricket-features">
+      <section className="cricket-features" data-testid="cricket-features">
         <div className="container">
           <div className="section-header">
             <div className="section-badge">
@@ -288,88 +195,169 @@ What would you like to know?`,
           </div>
           
           <div className="features-grid">
-            <div className="feature-card">
+            <div className="feature-card" data-reveal="1">
               <div className="feature-icon">
-                <span className="icon">👥</span>
+                <Users size={24} />
               </div>
               <h3 className="feature-title">Player Information</h3>
               <p className="feature-description">Find out which team a player belongs to or get their latest performance stats.</p>
-              <div className="feature-example">
-                <strong>Example:</strong> "Which team is John Smith in?"
+              <div className="feature-examples">
+                <div className="feature-example">
+                  <strong>Example:</strong> "Which team is Harshvarshan in?"
+                </div>
+                <div className="feature-example">
+                  <strong>Example:</strong> "Who are the players for Caroline Springs Gold U10?"
+                </div>
               </div>
             </div>
             
-            <div className="feature-card">
+            <div className="feature-card" data-reveal="2">
               <div className="feature-icon">
-                <span className="icon">📅</span>
+                <Calendar size={24} />
               </div>
               <h3 className="feature-title">Fixtures & Schedule</h3>
               <p className="feature-description">Get upcoming matches, venues, and match details for any team.</p>
-              <div className="feature-example">
-                <strong>Example:</strong> "List all fixtures for Caroline Springs Blue U10"
+              <div className="feature-examples">
+                <div className="feature-example">
+                  <strong>Example:</strong> "List all fixtures for Caroline Springs Blue U10"
+                </div>
+                <div className="feature-example">
+                  <strong>Example:</strong> "When is the next game for Caroline Springs White U10?"
+                </div>
               </div>
             </div>
             
-            <div className="feature-card">
+            <div className="feature-card" data-reveal="3">
               <div className="feature-icon">
-                <span className="icon">🏆</span>
+                <Trophy size={24} />
               </div>
               <h3 className="feature-title">Ladder Positions</h3>
               <p className="feature-description">Check current standings, points, and performance statistics.</p>
-              <div className="feature-example">
-                <strong>Example:</strong> "Where are Caroline Springs Blue U10 on the ladder?"
+              <div className="feature-examples">
+                <div className="feature-example">
+                  <strong>Example:</strong> "Where are Caroline Springs Blue U10 on the ladder?"
+                </div>
+                <div className="feature-example">
+                  <strong>Example:</strong> "Show me the current ladder standings"
+                </div>
               </div>
             </div>
             
-            <div className="feature-card">
+            <div className="feature-card" data-reveal="4">
               <div className="feature-icon">
-                <span className="icon">📊</span>
+                <BarChart3 size={24} />
               </div>
               <h3 className="feature-title">Player Statistics</h3>
               <p className="feature-description">Get detailed performance data from recent matches.</p>
-              <div className="feature-example">
-                <strong>Example:</strong> "How many runs did Jane Doe score last match?"
+              <div className="feature-examples">
+                <div className="feature-example">
+                  <strong>Example:</strong> "How many runs did Hemant Shah score last match?"
+                </div>
+                <div className="feature-example">
+                  <strong>Example:</strong> "Who scored most runs last match?"
+                </div>
               </div>
+            </div>
+          </div>
+
+          {/* Live Demo Section */}
+          <div className="live-demo-section">
+            <div className="live-demo-header">
+              <h3 className="live-demo-title">Try It Live</h3>
+              <p className="live-demo-description">Click any example below to see the assistant in action</p>
             </div>
             
-            <div className="feature-card">
-              <div className="feature-icon">
-                <span className="icon">⏰</span>
-              </div>
-              <h3 className="feature-title">Next Match Info</h3>
-              <p className="feature-description">Find out when and where the next game is scheduled.</p>
-              <div className="feature-example">
-                <strong>Example:</strong> "When is the next game for Caroline Springs White U10?"
-              </div>
+            <div className="demo-chips">
+              <button 
+                className="demo-chip" 
+                onClick={() => handleDemoChip("Fixtures for Blue U10 this week")}
+                aria-label="Try: Fixtures for Blue U10 this week"
+              >
+                <Calendar size={16} />
+                Fixtures for Blue U10 this week
+              </button>
+              
+              <button 
+                className="demo-chip" 
+                onClick={() => handleDemoChip("Ladder position for White U10")}
+                aria-label="Try: Ladder position for White U10"
+              >
+                <Trophy size={16} />
+                Ladder position for White U10
+              </button>
+              
+              <button 
+                className="demo-chip" 
+                onClick={() => handleDemoChip("Who scored most runs last match?")}
+                aria-label="Try: Who scored most runs last match?"
+              >
+                <BarChart3 size={16} />
+                Who scored most runs last match?
+              </button>
             </div>
-            
-            <div className="feature-card">
-              <div className="feature-icon">
-                <span className="icon">📋</span>
+
+            {showDemoCTA && (
+              <div className="demo-cta">
+                <div className="demo-cta-content">
+                  <h4>Connect Your Club Data</h4>
+                  <p>Get real-time information for your cricket club</p>
+                  <button className="btn btn-primary" onClick={handleConnectClub}>
+                    Connect Club Data
+                  </button>
+                </div>
               </div>
-              <h3 className="feature-title">Team Rosters</h3>
-              <p className="feature-description">View complete player lists for any team.</p>
-              <div className="feature-example">
-                <strong>Example:</strong> "Who are the players for Caroline Springs Blue U10?"
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="footer">
+      <footer className="footer" data-testid="cricket-footer">
         <div className="container">
           <div className="footer-content">
-            <div className="footer-section">
+            <div className="footer-section footer-product">
               <div className="footer-logo">
-                <img src="/images/logo-white.svg" alt="ANZx.ai" className="logo" />
+                <img src="/images/anzx-logo.png" alt="ANZX.ai" className="logo" />
               </div>
               <p className="footer-description">
                 Next-generation AI agents for Australian businesses. 
                 Built with enterprise-grade security, compliance, and performance.
               </p>
-              <div className="footer-social">
+              <div className="footer-newsletter">
+                <h4 className="newsletter-title">Stay Updated</h4>
+                <form className="newsletter-form">
+                  <input 
+                    type="email" 
+                    placeholder="Enter your email" 
+                    className="newsletter-input"
+                    required
+                    aria-label="Email address for newsletter"
+                  />
+                  <button type="submit" className="newsletter-btn">Subscribe</button>
+                </form>
+              </div>
+            </div>
+            <div className="footer-section footer-company">
+              <h4 className="footer-title">Company</h4>
+              <ul className="footer-links">
+                <li><a href="/about">About</a></li>
+                <li><a href="/careers">Careers</a></li>
+                <li><a href="/contact">Contact</a></li>
+                <li><a href="/cricket">Cricket Agent</a></li>
+              </ul>
+            </div>
+            <div className="footer-section footer-legal">
+              <h4 className="footer-title">Legal</h4>
+              <ul className="footer-links">
+                <li><a href="/privacy">Privacy Policy</a></li>
+                <li><a href="/terms">Terms of Service</a></li>
+                <li><a href="/security">Security</a></li>
+                <li><a href="/compliance">Compliance</a></li>
+              </ul>
+            </div>
+            <div className="footer-section footer-social">
+              <h4 className="footer-title">Connect</h4>
+              <div className="social-links">
                 <a href="#" className="social-link" aria-label="LinkedIn">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
@@ -387,44 +375,16 @@ What would you like to know?`,
                 </a>
               </div>
             </div>
-            <div className="footer-section">
-              <h4 className="footer-title">Solutions</h4>
-              <ul className="footer-links">
-                <li><a href="/#solutions">Customer Support</a></li>
-                <li><a href="/#solutions">Sales & Lead Gen</a></li>
-                <li><a href="/#solutions">Business Intelligence</a></li>
-                <li><a href="/cricket">Cricket Agent</a></li>
-              </ul>
-            </div>
-            <div className="footer-section">
-              <h4 className="footer-title">Resources</h4>
-              <ul className="footer-links">
-                <li><a href="/docs">Documentation</a></li>
-                <li><a href="/docs/api">API Reference</a></li>
-                <li><a href="/blog">Blog</a></li>
-                <li><a href="/status">Status</a></li>
-              </ul>
-            </div>
-            <div className="footer-section">
-              <h4 className="footer-title">Company</h4>
-              <ul className="footer-links">
-                <li><a href="/about">About</a></li>
-                <li><a href="/careers">Careers</a></li>
-                <li><a href="/contact">Contact</a></li>
-                <li><a href="/privacy">Privacy</a></li>
-              </ul>
-            </div>
           </div>
           <div className="footer-bottom">
-            <p>&copy; 2024 ANZx.ai. All rights reserved. Built in Australia 🇦🇺</p>
-            <div className="footer-badges">
-              <span className="badge">SOC 2 Compliant</span>
-              <span className="badge">Australian Hosted</span>
-              <span className="badge">Privacy Act Compliant</span>
-            </div>
+            <p>&copy; 2024 ANZX.ai. All rights reserved. Built in Australia 🇦🇺</p>
+            <TrustBadges variant="footer" />
           </div>
         </div>
       </footer>
+
+      {/* Chat Dock */}
+      <ChatDockWrapper />
     </div>
   )
 }

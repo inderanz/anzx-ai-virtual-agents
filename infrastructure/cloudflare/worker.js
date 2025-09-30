@@ -60,6 +60,11 @@ export default {
       return handleCorsPreflight();
     }
     
+    // Handle trailing slash redirects for /cricket routes
+    if (pathname === '/cricket/chat' && !pathname.endsWith('/')) {
+      return Response.redirect(`${url.origin}/cricket/chat/`, 301);
+    }
+    
     // Serve cricket chatbot at /cricket route and static assets
     if (pathname === '/cricket' || pathname.startsWith('/cricket/') || pathname.startsWith('/_next/') || pathname.startsWith('/images/')) {
       try {

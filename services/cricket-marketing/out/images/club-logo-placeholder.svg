@@ -1,0 +1,13 @@
+<svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Cricket Club Logo Placeholder -->
+  <circle cx="30" cy="30" r="28" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+  
+  <!-- Cricket bat -->
+  <rect x="20" y="15" width="3" height="20" rx="1.5" fill="#0f766e" transform="rotate(-15 21.5 25)"/>
+  
+  <!-- Cricket ball -->
+  <circle cx="35" cy="25" r="4" fill="#dc2626"/>
+  
+  <!-- Club initials -->
+  <text x="30" y="45" font-family="Inter, sans-serif" font-size="8" font-weight="600" fill="#64748b" text-anchor="middle">CSCC</text>
+</svg>
