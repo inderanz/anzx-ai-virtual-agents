@@ -40,3 +40,9 @@ pytest-cov>=4.1.0
 python-dotenv>=1.0.0
 structlog>=23.2.0
 pytz>=2023.3
+
+# Redis for shared storage
+redis>=4.5.0
+
+# Firestore for persistent storage (free tier)
+google-cloud-firestore>=2.11.0

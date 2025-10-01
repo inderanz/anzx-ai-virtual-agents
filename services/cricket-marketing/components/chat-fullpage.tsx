@@ -106,21 +106,21 @@ What would you like to know?`,
     setMessages(prev => [...prev, streamingMessage])
 
     try {
-      const response = await fetch('https://cricket-agent-7x6g2q3xaq-uc.a.run.app/ask', {
+      const response = await fetch('https://cricket-agent-aa5gcxefza-ts.a.run.app/v1/ask', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          query: inputValue,
-          session_id: 'web-chat'
+          text: inputValue,
+          source: 'web'
         })
       })
 
       const data = await response.json()
       
       // Simulate streaming with jitter
-      const responseText = data.response || 'Sorry, I couldn\'t process your request. Please try again.'
+      const responseText = data.answer || 'Sorry, I couldn\'t process your request. Please try again.'
       const tokens = responseText.split(' ')
       let currentContent = ''
       

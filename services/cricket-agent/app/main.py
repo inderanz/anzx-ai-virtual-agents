@@ -329,6 +329,72 @@ async def refresh_data(
         logger.error(f"Data refresh failed: {e}")
         raise HTTPException(status_code=500, detail=f"Refresh failed: {str(e)}")
 
+@app.post("/sync")
+async def sync_data(request: Dict[str, Any] = None):
+    """
+    Public endpoint to trigger data synchronization
+    Can be called without authentication for automated pipelines
+    """
+    logger.info("Data sync requested via /sync endpoint")
+    
+    try:
+        # Import sync functions
+        from jobs.sync import CricketDataSync
+        
+        # Initialize sync
+        sync = CricketDataSync()
+        
+        # Run full sync
+        result = await sync.sync_all()
+        
+        logger.info(f"Data sync completed", extra={
+            "status": result.get("status", "success"),
+            "stats": result.get("stats", {})
+        })
+        
+        return {
+            "status": result.get("status", "success"),
+            "message": "Data synchronization completed",
+            "stats": result.get("stats", {}),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Data sync failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
+
+@app.post("/admin/populate-synthetic")
+async def populate_synthetic_data():
+    """
+    Admin endpoint to populate synthetic cricket data
+    Used by automated pipelines for data population
+    """
+    logger.info("Synthetic data population requested")
+    
+    try:
+        # Import synthetic data generator
+        from scripts.synthetic_data_generator import SyntheticCricketDataGenerator
+        
+        # Generate and store synthetic data
+        generator = SyntheticCricketDataGenerator()
+        result = await generator.generate_and_store_synthetic_data()
+        
+        logger.info(f"Synthetic data population completed", extra={
+            "status": result.get("status", "success"),
+            "stats": result.get("stats", {})
+        })
+        
+        return {
+            "status": result.get("status", "success"),
+            "message": "Synthetic data population completed",
+            "stats": result.get("stats", {}),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Synthetic data population failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Synthetic data population failed: {str(e)}")
+
 # Root endpoint
 @app.get("/")
 async def root():
@@ -340,6 +406,367 @@ async def root():
         "docs": "/docs",
         "health": "/healthz"
     }
+
+@app.get("/debug/vector-store")
+async def debug_vector_store():
+    """Debug endpoint to check vector store contents"""
+    try:
+        from agent.tools.vector_client import get_vector_client
+        
+        vector_client = get_vector_client()
+        
+        # Get stored documents count
+        stored_docs = getattr(vector_client, '_stored_documents', {})
+        
+        # Try to reload from local storage
+        try:
+            vector_client._load_from_local_storage()
+            stored_docs = getattr(vector_client, '_stored_documents', {})
+        except Exception as e:
+            logger.warning(f"Failed to reload from local storage: {e}")
+        
+        # Try to reload from GCS
+        try:
+            vector_client._load_from_gcs()
+            stored_docs = getattr(vector_client, '_stored_documents', {})
+        except Exception as e:
+            logger.warning(f"Failed to reload from GCS: {e}")
+        
+        return {
+            "status": "success",
+            "vector_store_type": type(vector_client).__name__,
+            "project_id": vector_client.project_id,
+            "stored_documents_count": len(stored_docs),
+            "document_ids": list(stored_docs.keys())[:10],  # First 10 IDs
+            "sample_document": stored_docs.get(list(stored_docs.keys())[0], {}) if stored_docs else None,
+            "gcs_bucket": f"{vector_client.project_id}-cricket-vectors",
+            "vector_client_instance_id": id(vector_client),
+            "current_instance_id": id(vector_client)
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+@app.post("/debug/reload-vector-store")
+async def reload_vector_store():
+    """Force reload vector store from GCS"""
+    try:
+        from agent.tools.vector_client import get_vector_client
+        
+        vector_client = get_vector_client()
+        vector_client._load_from_gcs()
+        
+        stored_docs = getattr(vector_client, '_stored_documents', {})
+        
+        return {
+            "status": "success",
+            "message": f"Reloaded {len(stored_docs)} documents from GCS",
+            "stored_documents_count": len(stored_docs)
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+@app.post("/debug/test-vector-store")
+async def test_vector_store():
+    """Test vector store by directly upserting a document"""
+    try:
+        from agent.tools.vector_client import get_vector_client
+        
+        vector_client = get_vector_client()
+        
+        # Test document
+        test_doc = {
+            "id": "test-doc-1",
+            "text": "This is a test document for Harshvarshan",
+            "metadata": {
+                "type": "test",
+                "player": "Harshvarshan"
+            }
+        }
+        
+        # Upsert the test document
+        vector_client.upsert([test_doc])
+        
+        # Check if it was stored
+        stored_docs = getattr(vector_client, '_stored_documents', {})
+        
+        return {
+            "status": "success",
+            "message": f"Test document upserted",
+            "stored_documents_count": len(stored_docs),
+            "test_doc_stored": "test-doc-1" in stored_docs
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+@app.post("/admin/initialize-matching-engine")
+async def initialize_matching_engine():
+    """Initialize Vertex AI Matching Engine"""
+    try:
+        from agent.tools.vector_client import get_vector_client
+        
+        vector_client = get_vector_client()
+        
+        # Initialize Matching Engine
+        success = vector_client.initialize_matching_engine()
+        
+        if success:
+            return {
+                "status": "success",
+                "message": "Matching Engine initialized successfully",
+                "matching_engine_status": vector_client.get_matching_engine_status()
+            }
+        else:
+            return {
+                "status": "error",
+                "message": "Failed to initialize Matching Engine"
+            }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+@app.get("/debug/matching-engine-status")
+async def get_matching_engine_status():
+    """Get Matching Engine status"""
+    try:
+        from agent.tools.vector_client import get_vector_client
+        
+        vector_client = get_vector_client()
+        status = vector_client.get_matching_engine_status()
+        
+        return {
+            "status": "success",
+            "matching_engine_status": status
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+@app.post("/debug/clear-corrupted-storage")
+async def clear_corrupted_storage():
+    """Clear corrupted storage and reinitialize"""
+    try:
+        from agent.tools.vector_client import get_vector_client
+        
+        vector_client = get_vector_client()
+        vector_client.clear_corrupted_storage()
+        
+        return {
+            "status": "success",
+            "message": "Corrupted storage cleared and reinitialized"
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+@app.get("/debug/redis-storage-status")
+async def get_redis_storage_status():
+    """Get Redis storage status"""
+    try:
+        from agent.tools.vector_client import get_vector_client
+        
+        vector_client = get_vector_client()
+        
+        if hasattr(vector_client, 'redis_storage') and vector_client.redis_storage:
+            status = vector_client.redis_storage.health_check()
+            metadata = vector_client.redis_storage.get_metadata()
+            
+            return {
+                "status": "success",
+                "redis_storage": status,
+                "metadata": metadata
+            }
+        else:
+            return {
+                "status": "success",
+                "redis_storage": {"status": "not_available"},
+                "metadata": {"storage_type": "fallback"}
+            }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+@app.post("/debug/clear-redis-storage")
+async def clear_redis_storage():
+    """Clear Redis storage"""
+    try:
+        from agent.tools.vector_client import get_vector_client
+        
+        vector_client = get_vector_client()
+        
+        if hasattr(vector_client, 'redis_storage') and vector_client.redis_storage:
+            success = vector_client.redis_storage.clear_all()
+            
+            if success:
+                return {
+                    "status": "success",
+                    "message": "Redis storage cleared successfully"
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": "Failed to clear Redis storage"
+                }
+        else:
+            return {
+                "status": "error",
+                "message": "Redis storage not available"
+            }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+@app.get("/debug/firestore-storage-status")
+async def get_firestore_storage_status():
+    """Get Firestore storage status"""
+    try:
+        from agent.tools.vector_client import get_vector_client
+        
+        vector_client = get_vector_client()
+        
+        if hasattr(vector_client, 'firestore_storage') and vector_client.firestore_storage:
+            status = vector_client.firestore_storage.health_check()
+            metadata = vector_client.firestore_storage.get_metadata()
+            
+            return {
+                "status": "success",
+                "firestore_storage": status,
+                "metadata": metadata
+            }
+        else:
+            return {
+                "status": "success",
+                "firestore_storage": {"status": "not_available"},
+                "metadata": {"storage_type": "fallback"}
+            }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+@app.post("/debug/clear-firestore-storage")
+async def clear_firestore_storage():
+    """Clear Firestore storage"""
+    try:
+        from agent.tools.vector_client import get_vector_client
+        
+        vector_client = get_vector_client()
+        
+        if hasattr(vector_client, 'firestore_storage') and vector_client.firestore_storage:
+            success = vector_client.firestore_storage.clear_all()
+            
+            if success:
+                return {
+                    "status": "success",
+                    "message": "Firestore storage cleared successfully"
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": "Failed to clear Firestore storage"
+                }
+        else:
+            return {
+                "status": "error",
+                "message": "Firestore storage not available"
+            }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+@app.get("/debug/cloud-storage-persistence-status")
+async def get_cloud_storage_persistence_status():
+    """Get Cloud Storage persistence status"""
+    try:
+        from agent.tools.vector_client import get_vector_client
+        
+        vector_client = get_vector_client()
+        
+        if hasattr(vector_client, 'cloud_storage_persistence') and vector_client.cloud_storage_persistence:
+            status = vector_client.cloud_storage_persistence.health_check()
+            metadata = vector_client.cloud_storage_persistence.get_metadata()
+            
+            return {
+                "status": "success",
+                "cloud_storage_persistence": status,
+                "metadata": metadata
+            }
+        else:
+            return {
+                "status": "success",
+                "cloud_storage_persistence": {"status": "not_available"},
+                "metadata": {"storage_type": "fallback"}
+            }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+@app.post("/debug/clear-cloud-storage-persistence")
+async def clear_cloud_storage_persistence():
+    """Clear Cloud Storage persistence"""
+    try:
+        from agent.tools.vector_client import get_vector_client
+        
+        vector_client = get_vector_client()
+        
+        if hasattr(vector_client, 'cloud_storage_persistence') and vector_client.cloud_storage_persistence:
+            success = vector_client.cloud_storage_persistence.clear_all()
+            
+            if success:
+                return {
+                    "status": "success",
+                    "message": "Cloud Storage persistence cleared successfully"
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": "Failed to clear Cloud Storage persistence"
+                }
+        else:
+            return {
+                "status": "error",
+                "message": "Cloud Storage persistence not available"
+            }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
 if __name__ == "__main__":
     import uvicorn

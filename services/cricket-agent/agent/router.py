@@ -37,10 +37,11 @@ class IntentRouter:
         # Intent patterns for regex detection
         self.intent_patterns = {
             "player_team": [
-                r"which team.*player\s+(\w+).*is\s+part\s+of",
-                r"what team.*(\w+).*plays\s+for",
-                r"which team.*(\w+).*belongs\s+to",
-                r"team.*(\w+).*plays\s+for"
+                r"which team.*is\s+(\w+).*in",
+                r"what team.*(\w+).*in",
+                r"(\w+).*team",
+                r"team.*(\w+)",
+                r"(\w+).*plays"
             ],
             "player_last_runs": [
                 r"how many runs.*(\w+).*score.*last\s+match",
@@ -49,16 +50,17 @@ class IntentRouter:
                 r"last\s+match.*(\w+).*runs"
             ],
             "fixtures_list": [
-                r"list.*fixtures.*(\w+.*\w+)",
-                r"fixtures.*(\w+.*\w+)",
-                r"upcoming.*matches.*(\w+.*\w+)",
-                r"schedule.*(\w+.*\w+)"
+                r"list.*fixtures.*(.*?)(?:\s+for|\s+of|\s*$)",
+                r"fixtures.*(.*?)(?:\s+for|\s+of|\s*$)",
+                r"upcoming.*matches.*(.*?)(?:\s+for|\s+of|\s*$)",
+                r"schedule.*(.*?)(?:\s+for|\s+of|\s*$)"
             ],
             "ladder_position": [
-                r"where.*(\w+.*\w+).*ladder",
-                r"ladder.*position.*(\w+.*\w+)",
-                r"(\w+.*\w+).*ladder.*position",
-                r"standings.*(\w+.*\w+)"
+                r"ladder.*for\s+(.*)",
+                r"show.*ladder.*for\s+(.*)",
+                r"ladder\s+(.*)",
+                r"standings.*for\s+(.*)",
+                r"position.*for\s+(.*)"
             ],
             "next_fixture": [
                 r"next.*fixture.*(\w+.*\w+)",
@@ -67,10 +69,10 @@ class IntentRouter:
                 r"when.*(\w+.*\w+).*play.*next"
             ],
             "roster_list": [
-                r"list.*players.*(\w+.*\w+)",
-                r"roster.*(\w+.*\w+)",
-                r"players.*(\w+.*\w+)",
-                r"team.*members.*(\w+.*\w+)"
+                r"list.*players.*(.*?)(?:\s+for|\s+of|\s*$)",
+                r"roster.*(.*?)(?:\s+for|\s+of|\s*$)",
+                r"players.*(.*?)(?:\s+for|\s+of|\s*$)",
+                r"team.*members.*(.*?)(?:\s+for|\s+of|\s*$)"
             ]
         }
     
@@ -97,29 +99,15 @@ class IntentRouter:
                 logger.info(f"Cache hit for request {request_id}")
                 return cached_response
             
-            # Detect intent
-            intent_result = await self._detect_intent(text)
-            intent = intent_result["intent"]
-            entities = intent_result["entities"]
-            
-            # Add team_hint to entities if provided
-            if team_hint and "team" not in entities:
-                entities["team"] = team_hint
-            
-            logger.info(f"Detected intent: {intent} with entities: {entities}", extra={
-                "request_id": request_id,
-                "intent": intent,
-                "entities": entities
-            })
-            
-            # Plan and execute
+            # Use LLM-driven RAG approach instead of complex regex patterns
             rag_start = time.time()
-            rag_results = await self._query_rag(text, entities)
+            answer = await self._llm_driven_rag(text, team_hint)
             rag_ms = int((time.time() - rag_start) * 1000)
             
-            api_start = time.time()
-            answer = await self._execute_handler(intent, entities, rag_results, text)
-            api_ms = int((time.time() - api_start) * 1000)
+            # Set intent to llm_rag for consistency
+            intent = "llm_rag"
+            entities = {}
+            api_ms = 0
             
             total_latency = int((time.time() - start_time) * 1000)
             
@@ -172,7 +160,7 @@ class IntentRouter:
         # Try regex patterns first
         for intent, patterns in self.intent_patterns.items():
             for pattern in patterns:
-                match = re.search(pattern, text_lower)
+                match = re.search(pattern, text_lower, re.IGNORECASE)
                 if match:
                     entities = self._extract_entities_from_match(match, intent)
                     return {"intent": intent, "entities": entities}
@@ -231,8 +219,22 @@ class IntentRouter:
             if "grade_id" in entities:
                 filters["grade_id"] = entities["grade_id"]
             
-            # Query vector store
-            results = self.vector_client.query(text, filters, k=6)
+            # Query vector store to get document IDs
+            doc_ids = self.vector_client.query(text, filters, k=6)
+            
+            # Retrieve actual document content
+            results = []
+            for doc_id in doc_ids:
+                try:
+                    # Get document content from vector store
+                    doc_content = self.vector_client.get_document(doc_id)
+                    if doc_content:
+                        results.append(doc_content)
+                except Exception as e:
+                    logger.warning(f"Failed to retrieve document {doc_id}: {e}")
+                    continue
+            
+            logger.info(f"RAG query returned {len(results)} document contents")
             return results
             
         except Exception as e:
@@ -620,6 +622,67 @@ class IntentRouter:
         keys_to_remove = [k for k, v in _cache.items() if current_time - v["timestamp"] > _cache_ttl]
         for k in keys_to_remove:
             del _cache[k]
+
+    async def _llm_driven_rag(self, text: str, team_hint: Optional[str] = None) -> str:
+        """
+        LLM-driven RAG approach that uses semantic search and LLM for response generation
+        
+        Args:
+            text: User query text
+            team_hint: Optional team hint for disambiguation
+            
+        Returns:
+            Generated response based on retrieved context
+        """
+        try:
+            # Step 1: Semantic search using vector database
+            logger.info(f"Performing semantic search for: '{text}'")
+            
+            # Query vector store for relevant documents
+            doc_ids = self.vector_client.query(text, k=6)
+            logger.info(f"Vector search returned {len(doc_ids)} document IDs")
+            
+            # Retrieve document contents
+            retrieved_docs = []
+            for doc_id in doc_ids:
+                doc_content = self.vector_client.get_document(doc_id)
+                if doc_content:
+                    retrieved_docs.append(doc_content)
+            
+            logger.info(f"Retrieved {len(retrieved_docs)} document contents")
+            
+            # Step 2: Use LLM to generate response based on retrieved context
+            if retrieved_docs:
+                # Combine retrieved documents as context
+                context = "\n\n".join(retrieved_docs)
+                
+                # Create prompt for LLM
+                prompt = f"""
+You are a cricket assistant for Caroline Springs Cricket Club. Use the following context to answer the user's question.
+
+Context:
+{context}
+
+User Question: {text}
+
+Instructions:
+- If the information is available in the context, provide a helpful and accurate answer
+- If the information is not available, politely say you don't have that information
+- Be conversational and friendly
+- Focus on cricket-related information like teams, players, fixtures, ladder positions, etc.
+
+Answer:"""
+                
+                # Use LLM to generate response
+                response = await self.llm_agent.summarise(context, text)
+                return response
+            else:
+                # No relevant documents found
+                return "I don't have information about that. Could you try asking about fixtures, ladder positions, player information, or team rosters?"
+                
+        except Exception as e:
+            logger.error(f"LLM-driven RAG failed: {e}")
+            return "I'm sorry, I encountered an error processing your request. Please try again."
 
 # Global router instance
 _router_instance: Optional[IntentRouter] = None
