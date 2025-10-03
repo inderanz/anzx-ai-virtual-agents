@@ -1,0 +1,63 @@
+# Google Cloud Build configuration for ANZX Marketing
+# Builds and deploys to Cloudflare Pages
+
+steps:
+  # Step 1: Install dependencies
+  - name: 'node:18'
+    entrypoint: 'npm'
+    args: ['install']
+    dir: 'services/anzx-marketing'
+
+  # Step 2: Run type checking
+  - name: 'node:18'
+    entrypoint: 'npm'
+    args: ['run', 'type-check']
+    dir: 'services/anzx-marketing'
+
+  # Step 3: Run linting
+  - name: 'node:18'
+    entrypoint: 'npm'
+    args: ['run', 'lint']
+    dir: 'services/anzx-marketing'
+
+  # Step 4: Build the application
+  - name: 'node:18'
+    entrypoint: 'npm'
+    args: ['run', 'build']
+    dir: 'services/anzx-marketing'
+    env:
+      - 'NODE_ENV=production'
+      - 'NEXT_PUBLIC_CORE_API_URL=${_CORE_API_URL}'
+      - 'NEXT_PUBLIC_CHAT_WIDGET_URL=${_CHAT_WIDGET_URL}'
+      - 'NEXT_PUBLIC_GOOGLE_CLOUD_PROJECT=${PROJECT_ID}'
+
+  # Step 5: Deploy to Cloudflare Pages
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Install Wrangler CLI
+        npm install -g wrangler
+        
+        # Deploy to Cloudflare Pages
+        cd services/anzx-marketing
+        wrangler pages deploy .next --project-name=anzx-marketing --branch=main
+    env:
+      - 'CLOUDFLARE_API_TOKEN=${_CLOUDFLARE_API_TOKEN}'
+      - 'CLOUDFLARE_ACCOUNT_ID=${_CLOUDFLARE_ACCOUNT_ID}'
+
+# Substitutions for environment variables
+substitutions:
+  _CORE_API_URL: 'https://api.anzx.ai'
+  _CHAT_WIDGET_URL: 'https://chat.anzx.ai'
+  _CLOUDFLARE_API_TOKEN: ''  # Set in Cloud Build trigger
+  _CLOUDFLARE_ACCOUNT_ID: ''  # Set in Cloud Build trigger
+
+# Build timeout
+timeout: '1200s'
+
+# Build options
+options:
+  machineType: 'N1_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY

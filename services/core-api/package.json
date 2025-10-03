@@ -1,0 +1,41 @@
+{
+  "name": "anzx-ai-platform-tests",
+  "version": "1.0.0",
+  "description": "Test dependencies for ANZX AI Platform",
+  "scripts": {
+    "test": "python scripts/run_all_tests.py",
+    "test:unit": "python scripts/run_all_tests.py unit",
+    "test:integration": "python scripts/run_all_tests.py integration",
+    "test:e2e": "python scripts/run_all_tests.py e2e",
+    "test:security": "python scripts/run_all_tests.py security",
+    "test:compliance": "python scripts/run_all_tests.py compliance",
+    "test:performance": "python scripts/run_all_tests.py performance",
+    "test:vulnerability": "python scripts/run_all_tests.py vulnerability",
+    "playwright:install": "npx playwright install",
+    "playwright:test": "npx playwright test",
+    "security:scan": "npm audit && safety check",
+    "coverage": "python -m pytest --cov=app --cov-report=html",
+    "lint": "bandit -r app/ && flake8 app/",
+    "format": "black app/ tests/",
+    "type-check": "mypy app/"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/anzx-ai-platform.git"
+  },
+  "keywords": [
+    "ai",
+    "testing",
+    "playwright",
+    "security",
+    "compliance"
+  ],
+  "author": "ANZX AI Platform Team",
+  "license": "MIT"
+}
