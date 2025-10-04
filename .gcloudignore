@@ -1,0 +1,40 @@
+# This file specifies files that are *not* uploaded to Google Cloud
+# using gcloud. It follows the same syntax as .gitignore
+
+.git
+.gitignore
+
+# Node
+node_modules/
+npm-debug.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+*.egg-info/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+dist/
+build/
+*.log
+
+# IMPORTANT: Do NOT ignore Next.js lib directories
+# We need services/anzx-marketing/lib/ for the build
+!services/anzx-marketing/lib/
+!services/anzx-marketing/lib/**/*

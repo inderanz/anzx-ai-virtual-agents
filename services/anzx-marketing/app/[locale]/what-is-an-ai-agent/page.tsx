@@ -10,6 +10,10 @@ import UseCasesSection from '@/components/educational/UseCasesSection';
 import ComparisonSection from '@/components/educational/ComparisonSection';
 import GetStartedCTA from '@/components/educational/GetStartedCTA';
 
+export function generateStaticParams() {
+  return [{ locale: 'en' }, { locale: 'hi' }];
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('educational.whatIsAiAgent');
   

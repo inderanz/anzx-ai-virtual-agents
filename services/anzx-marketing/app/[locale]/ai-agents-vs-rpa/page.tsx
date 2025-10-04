@@ -7,6 +7,10 @@ import ComparisonUseCases from '@/components/comparison/ComparisonUseCases';
 import ComparisonDecisionGuide from '@/components/comparison/ComparisonDecisionGuide';
 import GetStartedCTA from '@/components/educational/GetStartedCTA';
 
+export function generateStaticParams() {
+  return [{ locale: 'en' }, { locale: 'hi' }];
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'AI Agents vs RPA: Complete Comparison Guide | ANZX.ai',

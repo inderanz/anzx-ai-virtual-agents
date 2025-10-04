@@ -3,6 +3,10 @@ import { getTranslations } from 'next-intl/server';
 import BlogList from '@/components/blog/BlogList';
 import { getAllBlogPosts } from '@/lib/blog';
 
+export function generateStaticParams() {
+  return [{ locale: 'en' }, { locale: 'hi' }];
+}
+
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
   const t = await getTranslations({ locale: params.locale, namespace: 'blog' });
   

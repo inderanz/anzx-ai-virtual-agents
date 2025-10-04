@@ -7,6 +7,10 @@ import ComplianceSection from '@/components/regional/ComplianceSection';
 import PricingSection from '@/components/regional/PricingSection';
 import { getRegionData } from '@/lib/constants/regions';
 
+export function generateStaticParams() {
+  return [{ locale: 'en' }, { locale: 'hi' }];
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('regional.newZealand');
   

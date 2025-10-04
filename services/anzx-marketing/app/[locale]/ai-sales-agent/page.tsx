@@ -5,6 +5,10 @@ import { Footer } from '@/components/layout/Footer';
 import { ProductHero } from '@/components/product/ProductHero';
 import { getAgentById } from '@/lib/constants/agents';
 
+export function generateStaticParams() {
+  return [{ locale: 'en' }, { locale: 'hi' }];
+}
+
 export const metadata: Metadata = {
   title: 'Jack - AI Sales Agent | ANZX.ai',
   description:

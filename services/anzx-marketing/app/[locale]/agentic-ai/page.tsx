@@ -10,6 +10,10 @@ import AgenticVsTraditionalSection from '@/components/educational/AgenticVsTradi
 import AgenticImplementationSection from '@/components/educational/AgenticImplementationSection';
 import GetStartedCTA from '@/components/educational/GetStartedCTA';
 
+export function generateStaticParams() {
+  return [{ locale: 'en' }, { locale: 'hi' }];
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('educational.agenticAi');
   

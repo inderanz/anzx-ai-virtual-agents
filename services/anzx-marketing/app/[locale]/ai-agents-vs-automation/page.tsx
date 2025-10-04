@@ -6,6 +6,10 @@ import ComparisonUseCases from '@/components/comparison/ComparisonUseCases';
 import ComparisonDecisionGuide from '@/components/comparison/ComparisonDecisionGuide';
 import GetStartedCTA from '@/components/educational/GetStartedCTA';
 
+export function generateStaticParams() {
+  return [{ locale: 'en' }, { locale: 'hi' }];
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'AI Agents vs Traditional Automation: Which is Right for You? | ANZX.ai',

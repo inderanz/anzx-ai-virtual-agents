@@ -10,6 +10,10 @@ import WorkflowImplementationSection from '@/components/educational/WorkflowImpl
 import WorkflowToolsSection from '@/components/educational/WorkflowToolsSection';
 import GetStartedCTA from '@/components/educational/GetStartedCTA';
 
+export function generateStaticParams() {
+  return [{ locale: 'en' }, { locale: 'hi' }];
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('educational.workflowAutomation');
   

@@ -13,9 +13,20 @@ interface BlogPostPageProps {
 
 export async function generateStaticParams() {
   const posts = await getAllBlogPosts();
-  return posts.map((post) => ({
-    slug: post.slug,
-  }));
+  const locales = ['en', 'hi'];
+  
+  // Generate all combinations of locale and slug
+  const params = [];
+  for (const locale of locales) {
+    for (const post of posts) {
+      params.push({
+        locale,
+        slug: post.slug,
+      });
+    }
+  }
+  
+  return params;
 }
 
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {

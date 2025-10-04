@@ -21,6 +21,10 @@ export const metadata: Metadata = {
     'Enterprise-grade AI agents for customer service, sales, and recruiting. Trusted by businesses across Australia, New Zealand, India, and Singapore.',
 };
 
+export function generateStaticParams() {
+  return [{ locale: 'en' }, { locale: 'hi' }];
+}
+
 export default async function LocaleLayout({
   children,
   params: { locale },

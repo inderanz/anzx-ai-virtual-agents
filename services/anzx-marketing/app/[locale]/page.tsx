@@ -6,6 +6,10 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ConsentBanner } from '@/components/ui/ConsentBanner';
 
+export function generateStaticParams() {
+  return [{ locale: 'en' }, { locale: 'hi' }];
+}
+
 export const metadata: Metadata = {
   title: 'AI Agents for Business | ANZX.ai',
   description:
