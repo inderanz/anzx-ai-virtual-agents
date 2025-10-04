@@ -10,6 +10,9 @@ steps:
       - '-c'
       - |
         set -euo pipefail
+        
+        # Set bucket name
+        BUCKET_NAME=$(echo "${PROJECT_ID}" | tr '-' '_')
         cd services/cricket-marketing
         
         echo "Installing dependencies..."
@@ -29,6 +32,9 @@ steps:
       - '-c'
       - |
         set -euo pipefail
+        
+        # Set bucket name
+        BUCKET_NAME=$(echo "${PROJECT_ID}" | tr '-' '_')
         AGENT_URL=$$(gcloud run services describe cricket-agent --region australia-southeast1 --format='value(status.url)')
         echo -n "$$AGENT_URL" > AGENT_URL.txt
         echo "Cricket Agent URL: $$AGENT_URL"
@@ -43,6 +49,9 @@ steps:
       - '-c'
       - |
         set -euo pipefail
+        
+        # Set bucket name
+        BUCKET_NAME=$(echo "${PROJECT_ID}" | tr '-' '_')
         
         # Install Node.js and npm
         curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
@@ -107,7 +116,8 @@ steps:
           echo "Captured deployment URL: $$DEPLOYMENT_URL"
           
           # Upload deployment URL to Cloud Storage for next steps
-          echo "$$DEPLOYMENT_URL" | gsutil cp - gs://${PROJECT_ID}_cloudbuild/deployment-url.txt
+          BUCKET_NAME=$(echo "${PROJECT_ID}" | tr '-' '_')
+          echo "$$DEPLOYMENT_URL" | gsutil cp - gs://${BUCKET_NAME}_cloudbuild/deployment-url.txt
           echo "Uploaded deployment URL to Cloud Storage"
         else
           echo "Error: Could not determine deployment URL"
@@ -130,9 +140,12 @@ steps:
       - |
         set -euo pipefail
         
+        # Set bucket name
+        BUCKET_NAME=$(echo "${PROJECT_ID}" | tr '-' '_')
+        
         # Download deployment URL from Cloud Storage
         echo "Downloading deployment URL from Cloud Storage..."
-        gsutil cp gs://${PROJECT_ID}_cloudbuild/deployment-url.txt DEPLOYMENT_URL.txt 2>/dev/null || echo "Failed to download from Cloud Storage"
+        gsutil cp gs://${BUCKET_NAME}_cloudbuild/deployment-url.txt DEPLOYMENT_URL.txt 2>/dev/null || echo "Failed to download from Cloud Storage"
         
         # Read the captured deployment URL
         if [ -f DEPLOYMENT_URL.txt ]; then
@@ -164,9 +177,12 @@ steps:
       - |
         set -euo pipefail
         
+        # Set bucket name
+        BUCKET_NAME=$(echo "${PROJECT_ID}" | tr '-' '_')
+        
         # Download deployment URL from Cloud Storage
         echo "Downloading deployment URL from Cloud Storage..."
-        gsutil cp gs://${PROJECT_ID}_cloudbuild/deployment-url.txt DEPLOYMENT_URL.txt 2>/dev/null || echo "Failed to download from Cloud Storage"
+        gsutil cp gs://${BUCKET_NAME}_cloudbuild/deployment-url.txt DEPLOYMENT_URL.txt 2>/dev/null || echo "Failed to download from Cloud Storage"
         
         # Get secrets for worker deployment
         CF_API_TOKEN=$$(gcloud secrets versions access latest --secret=CLOUDFLARE_API_TOKEN)
@@ -201,9 +217,12 @@ steps:
       - |
         set -euo pipefail
         
+        # Set bucket name
+        BUCKET_NAME=$(echo "${PROJECT_ID}" | tr '-' '_')
+        
         # Download deployment URL from Cloud Storage
         echo "Downloading deployment URL from Cloud Storage..."
-        gsutil cp gs://${PROJECT_ID}_cloudbuild/deployment-url.txt DEPLOYMENT_URL.txt 2>/dev/null || echo "Failed to download from Cloud Storage"
+        gsutil cp gs://${BUCKET_NAME}_cloudbuild/deployment-url.txt DEPLOYMENT_URL.txt 2>/dev/null || echo "Failed to download from Cloud Storage"
         
         # Set environment variable
         export CLOUDFLARE_API_TOKEN=$$(cat CF_API_TOKEN.txt)
@@ -226,6 +245,9 @@ steps:
       - '-c'
       - |
         set -euo pipefail
+        
+        # Set bucket name
+        BUCKET_NAME=$(echo "${PROJECT_ID}" | tr '-' '_')
         
         # Get configuration
         CF_ACCOUNT_ID=$$(gcloud secrets versions access latest --secret=CLOUDFLARE_ACCOUNT_ID)
