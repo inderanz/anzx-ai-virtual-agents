@@ -6,9 +6,10 @@ import LocalFeaturesSection from '@/components/regional/LocalFeaturesSection';
 import ComplianceSection from '@/components/regional/ComplianceSection';
 import PricingSection from '@/components/regional/PricingSection';
 import { getRegionData } from '@/lib/constants/regions';
+import { routing } from '@/routing';
 
 export function generateStaticParams() {
-  return [{ locale: 'en' }, { locale: 'hi' }];
+  return routing.locales.map((locale) => ({ locale }));
 }
 
 export async function generateMetadata(): Promise<Metadata> {

@@ -5,9 +5,10 @@ import { FeatureGrid } from '@/components/home/FeatureGrid';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ConsentBanner } from '@/components/ui/ConsentBanner';
+import { routing } from '@/routing';
 
 export function generateStaticParams() {
-  return [{ locale: 'en' }, { locale: 'hi' }];
+  return routing.locales.map((locale) => ({ locale }));
 }
 
 export const metadata: Metadata = {

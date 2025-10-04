@@ -4,9 +4,10 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ProductHero } from '@/components/product/ProductHero';
 import { getAgentById } from '@/lib/constants/agents';
+import { routing } from '@/routing';
 
 export function generateStaticParams() {
-  return [{ locale: 'en' }, { locale: 'hi' }];
+  return routing.locales.map((locale) => ({ locale }));
 }
 
 export const metadata: Metadata = {

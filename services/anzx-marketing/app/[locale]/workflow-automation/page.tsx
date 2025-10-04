@@ -9,9 +9,10 @@ import WorkflowExamplesSection from '@/components/educational/WorkflowExamplesSe
 import WorkflowImplementationSection from '@/components/educational/WorkflowImplementationSection';
 import WorkflowToolsSection from '@/components/educational/WorkflowToolsSection';
 import GetStartedCTA from '@/components/educational/GetStartedCTA';
+import { routing } from '@/routing';
 
 export function generateStaticParams() {
-  return [{ locale: 'en' }, { locale: 'hi' }];
+  return routing.locales.map((locale) => ({ locale }));
 }
 
 export async function generateMetadata(): Promise<Metadata> {

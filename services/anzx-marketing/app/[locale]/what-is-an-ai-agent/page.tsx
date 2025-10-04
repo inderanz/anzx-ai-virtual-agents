@@ -9,9 +9,10 @@ import BenefitsSection from '@/components/educational/BenefitsSection';
 import UseCasesSection from '@/components/educational/UseCasesSection';
 import ComparisonSection from '@/components/educational/ComparisonSection';
 import GetStartedCTA from '@/components/educational/GetStartedCTA';
+import { routing } from '@/routing';
 
 export function generateStaticParams() {
-  return [{ locale: 'en' }, { locale: 'hi' }];
+  return routing.locales.map((locale) => ({ locale }));
 }
 
 export async function generateMetadata(): Promise<Metadata> {

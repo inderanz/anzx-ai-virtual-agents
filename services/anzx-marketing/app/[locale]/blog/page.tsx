@@ -1,10 +1,11 @@
 import { Metadata } from 'next';
-import { getTranslations } from 'next-intl/server';
+import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { routing } from '@/routing';
 import BlogList from '@/components/blog/BlogList';
 import { getAllBlogPosts } from '@/lib/blog';
 
 export function generateStaticParams() {
-  return [{ locale: 'en' }, { locale: 'hi' }];
+  return routing.locales.map((locale) => ({ locale }));
 }
 
 export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
@@ -22,6 +23,9 @@ export async function generateMetadata({ params }: { params: { locale: string } 
 }
 
 export default async function BlogPage({ params }: { params: { locale: string } }) {
+  // Enable static rendering
+  unstable_setRequestLocale(params.locale);
+
   const t = await getTranslations({ locale: params.locale, namespace: 'blog' });
   const posts = await getAllBlogPosts();
 

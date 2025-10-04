@@ -9,9 +9,10 @@ import AgenticUseCasesSection from '@/components/educational/AgenticUseCasesSect
 import AgenticVsTraditionalSection from '@/components/educational/AgenticVsTraditionalSection';
 import AgenticImplementationSection from '@/components/educational/AgenticImplementationSection';
 import GetStartedCTA from '@/components/educational/GetStartedCTA';
+import { routing } from '@/routing';
 
 export function generateStaticParams() {
-  return [{ locale: 'en' }, { locale: 'hi' }];
+  return routing.locales.map((locale) => ({ locale }));
 }
 
 export async function generateMetadata(): Promise<Metadata> {

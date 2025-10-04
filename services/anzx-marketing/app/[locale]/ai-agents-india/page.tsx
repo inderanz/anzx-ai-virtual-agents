@@ -7,9 +7,10 @@ import ComplianceSection from '@/components/regional/ComplianceSection';
 import PricingSection from '@/components/regional/PricingSection';
 import HindiLanguagePromotion from '@/components/regional/HindiLanguagePromotion';
 import { getRegionData } from '@/lib/constants/regions';
+import { routing } from '@/routing';
 
 export function generateStaticParams() {
-  return [{ locale: 'en' }, { locale: 'hi' }];
+  return routing.locales.map((locale) => ({ locale }));
 }
 
 export async function generateMetadata(): Promise<Metadata> {

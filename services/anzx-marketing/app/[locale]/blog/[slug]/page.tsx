@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import ArticleLayout from '@/components/blog/ArticleLayout';
 import { getBlogPost, getAllBlogPosts, getRelatedPosts } from '@/lib/blog';
+import { routing } from '@/routing';
 
 interface BlogPostPageProps {
   params: {
@@ -13,11 +14,11 @@ interface BlogPostPageProps {
 
 export async function generateStaticParams() {
   const posts = await getAllBlogPosts();
-  const locales = ['en', 'hi'];
+  // Use routing.locales instead
   
   // Generate all combinations of locale and slug
   const params = [];
-  for (const locale of locales) {
+  for (const locale of routing.locales) {
     for (const post of posts) {
       params.push({
         locale,

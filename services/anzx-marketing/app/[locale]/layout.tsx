@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
+import { unstable_setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Analytics } from '@/components/analytics/Analytics';
 import { Clarity } from '@/components/analytics/Clarity';
@@ -32,6 +33,9 @@ export default async function LocaleLayout({
   children: React.ReactNode;
   params: { locale: string };
 }) {
+  // Enable static rendering for this locale
+  unstable_setRequestLocale(locale);
+  
   let messages;
   try {
     messages = (await import(`../../messages/${locale}.json`)).default;
