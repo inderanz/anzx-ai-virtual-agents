@@ -1,218 +1,270 @@
-# ANZX Marketing - Deployment Guide
+# ANZX Marketing Website - Deployment Guide
 
-## 🚀 Deployment to Cloudflare Pages via Google Cloud Build
+## Overview
 
-This guide explains how to deploy the ANZX Marketing website to Cloudflare Pages using Google Cloud Build.
+This document provides instructions for deploying the ANZX Marketing website to production at **https://anzx.ai**.
+
+## Architecture
+
+- **Platform**: Cloudflare Pages
+- **Domain**: https://anzx.ai (root domain)
+- **Cricket Chatbot**: https://anzx.ai/cricket (preserved)
+- **Routing**: Cloudflare Worker handles routing between services
+- **Google Cloud**: Same project as cricket deployment
+- **Region**: australia-southeast1
 
 ## Prerequisites
 
-1. **Google Cloud Project** with Cloud Build API enabled
-2. **Cloudflare Account** with Pages enabled
-3. **Cloudflare API Token** with Pages permissions
-4. **GitHub Repository** connected to Cloud Build
+1. **Google Cloud CLI** installed and authenticated
+2. **Access** to Google Cloud project `anzx-ai-platform`
+3. **Access** to Cloudflare account
+4. **Secrets** configured in Google Cloud Secret Manager
 
-## Setup Steps
+## Quick Start
 
-### 1. Enable Google Cloud Build API
+### 1. Verify Prerequisites
 
 ```bash
-gcloud services enable cloudbuild.googleapis.com
+# Check gcloud is installed
+gcloud --version
+
+# Check authentication
+gcloud auth list
+
+# Verify project access
+gcloud projects describe anzx-ai-platform
 ```
 
-### 2. Get Cloudflare Credentials
-
-1. Log in to Cloudflare Dashboard
-2. Go to **My Profile** → **API Tokens**
-3. Create a new token with **Cloudflare Pages** permissions
-4. Note your **Account ID** from the dashboard
-
-### 3. Store Secrets in Google Secret Manager
+### 2. Verify Secrets
 
 ```bash
-# Store Cloudflare API Token
-echo -n "your-cloudflare-api-token" | gcloud secrets create cloudflare-api-token --data-file=-
+# List existing secrets (should include Cloudflare secrets from cricket)
+gcloud secrets list --project=anzx-ai-platform --filter="name:CLOUDFLARE OR name:CRICKET"
 
-# Store Cloudflare Account ID
-echo -n "your-cloudflare-account-id" | gcloud secrets create cloudflare-account-id --data-file=-
-
-# Grant Cloud Build access to secrets
-gcloud secrets add-iam-policy-binding cloudflare-api-token \
-  --member="serviceAccount:PROJECT_NUMBER@cloudbuild.gserviceaccount.com" \
-  --role="roles/secretmanager.secretAccessor"
-
-gcloud secrets add-iam-policy-binding cloudflare-account-id \
-  --member="serviceAccount:PROJECT_NUMBER@cloudbuild.gserviceaccount.com" \
-  --role="roles/secretmanager.secretAccessor"
+# Create ANZX_MARKETING_URL secret (one-time, will be updated during deployment)
+echo "https://anzx-marketing.pages.dev" | gcloud secrets create ANZX_MARKETING_URL \
+  --data-file=- \
+  --project=anzx-ai-platform
 ```
 
-### 4. Create Cloud Build Trigger
+### 3. Build Locally (Optional)
 
 ```bash
-gcloud builds triggers create github \
-  --name="anzx-marketing-deploy" \
-  --repo-name="anzx-ai-virtual-agents" \
-  --repo-owner="your-github-username" \
-  --branch-pattern="^main$" \
-  --build-config="services/anzx-marketing/cloudbuild.yaml" \
-  --substitutions='_CLOUDFLARE_API_TOKEN=$(gcloud secrets versions access latest --secret=cloudflare-api-token),_CLOUDFLARE_ACCOUNT_ID=$(gcloud secrets versions access latest --secret=cloudflare-account-id)'
+# Navigate to service directory
+cd services/anzx-marketing
+
+# Install dependencies
+npm install
+
+# Build for production
+npm run build
+
+# Verify build output in 'out/' directory
+ls -la out/
 ```
 
-### 5. Manual Deployment
-
-To deploy manually:
+### 4. Deploy to Production
 
 ```bash
+# Option 1: Use helper script (recommended)
+./scripts/deploy-anzx-marketing.sh
+
+# Option 2: Manual deployment
 gcloud builds submit \
-  --config=services/anzx-marketing/cloudbuild.yaml \
-  --substitutions=_CLOUDFLARE_API_TOKEN="your-token",_CLOUDFLARE_ACCOUNT_ID="your-account-id" \
-  .
+  --config=infrastructure/cloudbuild/pipelines/anzx-marketing-deploy.yaml \
+  --project=anzx-ai-platform \
+  --substitutions=_PROJECT_ID=anzx-ai-platform,_REGION=australia-southeast1
 ```
 
-## Deployment Process
+### 5. Verify Deployment
 
-1. **Push to GitHub** - Push code to `main` branch
-2. **Cloud Build Triggered** - Automatically starts build
-3. **Install Dependencies** - `npm install`
-4. **Type Check** - `npm run type-check`
-5. **Lint** - `npm run lint`
-6. **Build** - `npm run build`
-7. **Deploy to Cloudflare** - Using Wrangler CLI
+```bash
+# Check deployment status
+gcloud builds list --project=anzx-ai-platform --limit=5
+
+# Visit the website
+open https://anzx.ai
+
+# Verify cricket chatbot still works
+open https://anzx.ai/cricket
+```
+
+## Deployment Pipeline
+
+The deployment pipeline (`infrastructure/cloudbuild/pipelines/anzx-marketing-deploy.yaml`) performs these steps:
+
+1. **Build**: Compiles Next.js application
+2. **Deploy to Cloudflare Pages**: Deploys to `anzx-marketing` project
+3. **Update Secret**: Stores deployment URL in `ANZX_MARKETING_URL`
+4. **Update Worker**: Updates Cloudflare Worker with new routing
+5. **Deploy Worker**: Deploys updated worker to handle both services
+6. **Write State**: Records deployment state to Cloud Storage
+
+## Routing Logic
+
+The Cloudflare Worker routes requests as follows:
+
+```
+/api/cricket/*  → Cricket Agent (Cloud Run)
+/cricket/*      → Cricket Chatbot (Cloudflare Pages)
+/*              → ANZX Marketing (Cloudflare Pages)
+```
 
 ## Environment Variables
 
-The following environment variables are set during build:
+### Production Environment (`.env.production`)
 
-- `NEXT_PUBLIC_CORE_API_URL` - Core API endpoint
-- `NEXT_PUBLIC_CHAT_WIDGET_URL` - Chat widget endpoint
-- `NEXT_PUBLIC_GOOGLE_CLOUD_PROJECT` - GCP project ID
-
-Additional variables can be set in Cloudflare Pages dashboard:
-
-1. Go to **Pages** → **anzx-marketing** → **Settings** → **Environment Variables**
-2. Add production variables:
-   - `NEXT_PUBLIC_GA_MEASUREMENT_ID`
-   - `NEXT_PUBLIC_CLARITY_PROJECT_ID`
-   - `NEXT_PUBLIC_FIREBASE_API_KEY`
-   - etc.
-
-## Custom Domain Setup
-
-### 1. Add Custom Domain in Cloudflare
-
-1. Go to **Pages** → **anzx-marketing** → **Custom domains**
-2. Click **Set up a custom domain**
-3. Enter `anzx.ai`
-4. Follow DNS configuration instructions
-
-### 2. Configure DNS
-
-Add the following DNS records in Cloudflare:
-
-```
-Type: CNAME
-Name: anzx.ai
-Target: anzx-marketing.pages.dev
-Proxy: Enabled (Orange cloud)
+```env
+NEXT_PUBLIC_SITE_URL=https://anzx.ai
+NEXT_PUBLIC_CORE_API_URL=https://api.anzx.ai
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+NEXT_PUBLIC_CLARITY_PROJECT_ID=xxxxxxxxxx
+NODE_ENV=production
 ```
 
-### 3. SSL/TLS Configuration
+### Google Cloud Secrets
 
-1. Go to **SSL/TLS** → **Overview**
-2. Set encryption mode to **Full (strict)**
-3. Enable **Always Use HTTPS**
-4. Enable **Automatic HTTPS Rewrites**
+**Reused from Cricket Deployment:**
+- `CLOUDFLARE_API_TOKEN` - Cloudflare API token
+- `CLOUDFLARE_ACCOUNT_ID` - Cloudflare account ID
+- `CLOUDFLARE_ZONE_ID` - Zone ID for anzx.ai
+- `CLOUDFLARE_WORKER_NAME` - Worker name
+- `CLOUDFLARE_ROUTE_PATTERN` - Route pattern
+- `CRICKET_CHATBOT_URL` - Cricket chatbot deployment URL
+
+**New for ANZX Marketing:**
+- `ANZX_MARKETING_URL` - Marketing site deployment URL
 
 ## Monitoring
 
-### Build Logs
+### Uptime Monitoring
 
-View build logs in Google Cloud Console:
 ```bash
-gcloud builds list --limit=10
-gcloud builds log BUILD_ID
+# Configure uptime check
+gcloud monitoring uptime-checks create https anzx-marketing-uptime \
+  --resource-type=uptime-url \
+  --host=anzx.ai \
+  --path=/en \
+  --project=anzx-ai-platform
 ```
 
-### Deployment Status
+### Error Monitoring
 
-Check deployment status in Cloudflare:
-1. Go to **Pages** → **anzx-marketing** → **Deployments**
-2. View deployment history and logs
+- **Sentry**: Configure in `.env.production`
+- **Cloud Logging**: Automatic via Cloud Build
+- **Cloudflare Analytics**: Available in Cloudflare dashboard
 
 ### Performance Monitoring
 
-- **Cloudflare Analytics** - Traffic and performance metrics
-- **Google Analytics** - User behavior and conversions
-- **Microsoft Clarity** - Session recordings and heatmaps
-
-## Rollback
-
-To rollback to a previous deployment:
-
-1. Go to **Pages** → **anzx-marketing** → **Deployments**
-2. Find the previous successful deployment
-3. Click **...** → **Rollback to this deployment**
+- **Google Analytics**: Real User Monitoring (RUM)
+- **Microsoft Clarity**: Session recordings and heatmaps
+- **Lighthouse CI**: Automated performance testing
 
 ## Troubleshooting
 
 ### Build Fails
 
-1. Check Cloud Build logs for errors
-2. Verify all environment variables are set
-3. Test build locally: `npm run build`
+```bash
+# Check build logs
+gcloud builds log <BUILD_ID> --project=anzx-ai-platform
 
-### Deployment Fails
+# Test build locally
+cd services/anzx-marketing
+npm run build
+```
 
-1. Verify Cloudflare API token is valid
-2. Check Cloudflare account ID is correct
-3. Ensure Wrangler CLI is installed correctly
+### Deployment URL Not Captured
 
-### Site Not Loading
+```bash
+# Manually update secret
+echo "https://your-deployment-url.anzx-marketing.pages.dev" | \
+  gcloud secrets versions add ANZX_MARKETING_URL --data-file=- --project=anzx-ai-platform
+```
 
-1. Check DNS configuration
-2. Verify custom domain is properly configured
-3. Check SSL/TLS settings
-4. Clear Cloudflare cache
+### Worker Not Routing Correctly
 
-### Performance Issues
+```bash
+# Check worker logs in Cloudflare dashboard
+# Verify environment variables are set correctly
+# Redeploy worker manually if needed
+```
 
-1. Enable Cloudflare caching
-2. Optimize images (use WebP/AVIF)
-3. Enable Brotli compression
-4. Use Cloudflare CDN
+### Cricket Chatbot Stops Working
 
-## Cost Optimization
+```bash
+# Verify CRICKET_CHATBOT_URL secret is correct
+gcloud secrets versions access latest --secret=CRICKET_CHATBOT_URL --project=anzx-ai-platform
 
-- **Cloudflare Pages** - Free tier includes:
-  - Unlimited bandwidth
-  - Unlimited requests
-  - 500 builds per month
-  - 1 concurrent build
+# Rollback worker to previous version via Cloudflare dashboard
+```
 
-- **Google Cloud Build** - Free tier includes:
-  - 120 build-minutes per day
-  - First 10 builds per day are free
+## Rollback
+
+### Option 1: Rollback via Cloudflare Dashboard
+
+1. Log into Cloudflare dashboard
+2. Navigate to **Pages** > **anzx-marketing**
+3. Select previous deployment
+4. Click **"Rollback to this deployment"**
+
+### Option 2: Rollback Worker
+
+```bash
+# Update worker to point to previous deployment
+# Edit infrastructure/cloudflare/wrangler.toml
+# Redeploy worker
+cd infrastructure/cloudflare
+npx wrangler deploy
+```
+
+### Option 3: Emergency Maintenance Page
+
+```bash
+# Update DNS to point to maintenance page
+# Fix issues
+# Redeploy when ready
+```
+
+## Performance Targets
+
+- **LCP** (Largest Contentful Paint): < 2.5s
+- **FID** (First Input Delay): < 100ms
+- **CLS** (Cumulative Layout Shift): < 0.1
+- **Lighthouse Score**: > 90
+- **Bundle Size**: < 500KB (gzipped)
 
 ## Security
 
-- **HTTPS Only** - All traffic encrypted
-- **DDoS Protection** - Cloudflare's built-in protection
-- **WAF** - Web Application Firewall (optional)
-- **Rate Limiting** - Protect against abuse
-- **Bot Management** - Block malicious bots
+### Headers
 
-## Next Steps
+Configured in `next.config.js`:
+- Content-Security-Policy
+- X-Frame-Options: SAMEORIGIN
+- X-Content-Type-Options: nosniff
+- Referrer-Policy: strict-origin-when-cross-origin
 
-1. ✅ Test deployment to staging environment
-2. ✅ Configure custom domain
-3. ✅ Set up monitoring and alerts
-4. ✅ Enable analytics
-5. ✅ Configure CDN caching rules
-6. ✅ Set up automated backups
-7. ✅ Document runbook for incidents
+### Secrets Management
+
+- Never commit secrets to git
+- Use Google Cloud Secret Manager
+- Rotate secrets regularly
+- Use Workload Identity Federation (no service account keys)
 
 ## Support
 
-For deployment issues:
-- Google Cloud Build: https://cloud.google.com/build/docs
-- Cloudflare Pages: https://developers.cloudflare.com/pages
-- Wrangler CLI: https://developers.cloudflare.com/workers/wrangler
+- **Documentation**: See `.kiro/specs/anzx-marketing-website-enhancement/`
+- **Deployment Checklist**: See `DEPLOYMENT_CHECKLIST.md`
+- **Phase 17 Plan**: See `PHASE_17_DEPLOYMENT_PLAN.md`
+
+## Additional Resources
+
+- [Next.js Deployment Documentation](https://nextjs.org/docs/deployment)
+- [Cloudflare Pages Documentation](https://developers.cloudflare.com/pages/)
+- [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
+- [Google Cloud Build Documentation](https://cloud.google.com/build/docs)
+
+---
+
+**Last Updated**: 2025-04-10
+**Version**: 1.0.0
+**Status**: Production Ready

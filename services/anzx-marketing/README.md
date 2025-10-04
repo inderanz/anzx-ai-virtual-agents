@@ -39,5 +39,19 @@ services/anzx-marketing/
 ├── components/       # React components
 ├── lib/             # Utilities and API clients
 ├── messages/        # i18n translations
+├── docs/            # Documentation
 └── public/          # Static assets
 ```
+
+## Documentation
+
+- [Microsoft Clarity Setup Guide](./docs/CLARITY_SETUP.md) - Complete guide for Clarity integration
+- [Clarity Quick Reference](./docs/CLARITY_QUICK_REFERENCE.md) - Quick reference for developers
+
+## Analytics
+
+This project includes:
+- **Google Analytics 4**: Page views, events, conversions
+- **Microsoft Clarity**: Session recordings, heatmaps, user behavior
+
+See the [Clarity Setup Guide](./docs/CLARITY_SETUP.md) for configuration details.

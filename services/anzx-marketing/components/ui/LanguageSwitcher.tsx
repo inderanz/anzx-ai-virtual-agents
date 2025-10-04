@@ -18,18 +18,18 @@ export function LanguageSwitcher() {
       // Get the current path without locale prefix
       const segments = pathname.split('/').filter(Boolean);
       const currentLocale = segments[0];
-      
+
       // Remove locale from path if it exists
       let pathWithoutLocale = pathname;
       if (currentLocale === 'en' || currentLocale === 'hi') {
         pathWithoutLocale = '/' + segments.slice(1).join('/');
       }
-      
+
       // Build new path with new locale
-      const newPath = newLocale === 'en' 
+      const newPath = newLocale === 'en'
         ? pathWithoutLocale || '/'
         : `/${newLocale}${pathWithoutLocale || '/'}`;
-      
+
       // Navigate to new path
       router.push(newPath);
       router.refresh();

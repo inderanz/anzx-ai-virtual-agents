@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Menu, X } from 'lucide-react';
-import { LanguageSwitcher } from '../ui/LanguageSwitcher';
+import ClientOnlyLanguageSwitcher from '../ui/ClientOnlyLanguageSwitcher';
 import { LanguageSwitcherLink } from '../ui/LanguageSwitcherLink';
 import { Navigation } from './Navigation';
 import { MobileMenu } from './MobileMenu';
@@ -43,7 +43,7 @@ export function Header() {
 
           {/* Right side */}
           <div className="hidden md:flex items-center space-x-4">
-            <LanguageSwitcher />
+            <ClientOnlyLanguageSwitcher />
             <Link
               href="/login"
               className="text-gray-700 hover:text-anzx-blue transition-colors"

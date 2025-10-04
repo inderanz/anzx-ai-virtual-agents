@@ -1,0 +1,34 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="100" fill="url(#olivia-gradient)"/>
+  
+  <!-- Gradient Definition -->
+  <defs>
+    <linearGradient id="olivia-gradient" x1="0" y1="0" x2="200" y2="200">
+      <stop offset="0%" stop-color="#EC4899"/>
+      <stop offset="100%" stop-color="#F472B6"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Face -->
+  <circle cx="100" cy="85" r="35" fill="#FECACA"/>
+  
+  <!-- Hair -->
+  <path d="M60 65 Q60 40 100 40 Q140 40 140 65 L140 90 Q140 55 100 55 Q60 55 60 90 Z" fill="#DC2626"/>
+  
+  <!-- Eyes -->
+  <circle cx="90" cy="80" r="3" fill="#1F2937"/>
+  <circle cx="110" cy="80" r="3" fill="#1F2937"/>
+  
+  <!-- Smile -->
+  <path d="M85 95 Q100 105 115 95" stroke="#1F2937" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <!-- Body/Shoulders -->
+  <ellipse cx="100" cy="150" rx="50" ry="30" fill="#F472B6"/>
+  
+  <!-- Headset -->
+  <path d="M70 75 Q65 75 65 80 L65 90 Q65 95 70 95" stroke="#1F2937" stroke-width="3" fill="none"/>
+  <path d="M130 75 Q135 75 135 80 L135 90 Q135 95 130 95" stroke="#1F2937" stroke-width="3" fill="none"/>
+  <circle cx="65" cy="85" r="8" fill="#1F2937"/>
+  <circle cx="135" cy="85" r="8" fill="#1F2937"/>
+</svg>

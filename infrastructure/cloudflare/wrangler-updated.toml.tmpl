@@ -1,0 +1,29 @@
+# Cloudflare Worker Configuration Template (Updated for ANZX Marketing + Cricket)
+# This file is templated during Cloud Build - do not hardcode secrets
+
+name = "${CLOUDFLARE_WORKER_NAME}"
+main = "worker-updated.js"
+compatibility_date = "2025-09-28"
+
+# Account and zone configuration
+account_id = "${CLOUDFLARE_ACCOUNT_ID}"
+
+# Route configuration - handles both cricket and marketing
+routes = [
+  { pattern = "${CLOUDFLARE_ROUTE_PATTERN}", zone_id = "${CLOUDFLARE_ZONE_ID}" },
+  { pattern = "anzx.ai/*", zone_id = "${CLOUDFLARE_ZONE_ID}" },
+  { pattern = "anzx.ai/_next/*", zone_id = "${CLOUDFLARE_ZONE_ID}" },
+  { pattern = "anzx.ai/images/*", zone_id = "${CLOUDFLARE_ZONE_ID}" }
+]
+
+# Environment variables
+[vars]
+CRICKET_AGENT_URL = "${CRICKET_AGENT_URL}"
+CRICKET_CHATBOT_URL = "${CRICKET_CHATBOT_URL}"
+ANZX_MARKETING_URL = "${ANZX_MARKETING_URL}"
+
+# Worker configuration
+[build]
+command = ""
+
+# No external modules needed for this simple proxy

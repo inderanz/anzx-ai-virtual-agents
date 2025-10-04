@@ -1,7 +1,7 @@
 "use client";
 
 import { ButtonHTMLAttributes, ReactNode } from 'react';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion'; // Temporarily disabled
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
@@ -41,16 +41,14 @@ export function Button({
   };
 
   return (
-    <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+    <button
       className={cn(baseStyles, variants[variant], sizes[size], className)}
       {...props}
     >
       {showStarIcon && <Star className="w-4 h-4 mr-2 fill-current" />}
       {icon && <span className="mr-2">{icon}</span>}
       {children}
-    </motion.button>
+    </button>
   );
 }
 

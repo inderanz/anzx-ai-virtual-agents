@@ -1,0 +1,32 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="100" fill="url(#emma-gradient)"/>
+  
+  <!-- Gradient Definition -->
+  <defs>
+    <linearGradient id="emma-gradient" x1="0" y1="0" x2="200" y2="200">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Face -->
+  <circle cx="100" cy="85" r="35" fill="#FED7AA"/>
+  
+  <!-- Hair -->
+  <path d="M65 70 Q65 45 100 45 Q135 45 135 70 L135 85 Q135 60 100 60 Q65 60 65 85 Z" fill="#8B4513"/>
+  
+  <!-- Eyes -->
+  <circle cx="90" cy="80" r="3" fill="#1F2937"/>
+  <circle cx="110" cy="80" r="3" fill="#1F2937"/>
+  
+  <!-- Smile -->
+  <path d="M85 95 Q100 102 115 95" stroke="#1F2937" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <!-- Body/Shoulders -->
+  <ellipse cx="100" cy="150" rx="50" ry="30" fill="#6366F1"/>
+  
+  <!-- Professional Badge -->
+  <circle cx="130" cy="130" r="15" fill="#10B981"/>
+  <text x="130" y="136" text-anchor="middle" fill="white" font-size="16" font-weight="bold">✓</text>
+</svg>

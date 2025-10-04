@@ -224,7 +224,7 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
   - Add syntax highlighting for code blocks
   - _Requirements: 4.2_
 
-- [ ] 26. Create blog listing page
+- [x] 26. Create blog listing page
   - Create `/blog/page.tsx`
   - Implement BlogList component
   - Create BlogCard component
@@ -233,7 +233,7 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
   - Add search functionality
   - _Requirements: 4.1, 4.4_
 
-- [ ] 27. Create blog post layout
+- [x] 27. Create blog post layout
   - Create `/blog/[slug]/page.tsx`
   - Implement ArticleLayout component
   - Add table of contents
@@ -242,14 +242,14 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
   - Add social sharing buttons
   - _Requirements: 4.2, 4.5_
 
-- [ ] 28. Write initial blog content
+- [x] 28. Write initial blog content
   - Create 10+ blog posts in MDX format
   - Topics: AI agents, customer service AI, workflow automation, AI vs RPA
   - Ensure original ANZX.ai perspective
   - Add proper meta tags and OG images
   - _Requirements: 4.3, 19.5_
 
-- [ ] 29. Implement related posts feature
+- [x] 29. Implement related posts feature
   - Add related posts algorithm
   - Display related posts at end of articles
   - Add conversion CTAs in articles
@@ -259,14 +259,14 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
 
 ## Phase 7: Regional Pages
 
-- [ ] 30. Create regional page template
+- [x] 30. Create regional page template
   - Implement RegionalHero component
   - Add country-specific content sections
   - Create CurrencyDisplay component
   - Add local contact information display
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 31. Build Australia regional page
+- [x] 31. Build Australia regional page
   - Create `/ai-agents-australia/page.tsx`
   - Add Australia-specific case studies
   - Display AUD currency
@@ -274,7 +274,7 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
   - Add local phone number
   - _Requirements: 7.1, 7.4_
 
-- [ ] 32. Build New Zealand regional page
+- [x] 32. Build New Zealand regional page
   - Create `/ai-agents-new-zealand/page.tsx`
   - Add NZ-specific case studies
   - Display NZD currency
@@ -282,7 +282,7 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
   - Add local phone number
   - _Requirements: 7.2, 7.4_
 
-- [ ] 33. Build India regional page
+- [x] 33. Build India regional page
   - Create `/ai-agents-india/page.tsx`
   - Add India-specific case studies
   - Display INR currency
@@ -291,7 +291,7 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
   - Add local phone number
   - _Requirements: 7.3, 7.4, 7.5_
 
-- [ ] 34. Build Singapore regional page
+- [x] 34. Build Singapore regional page
   - Create `/ai-agents-singapore/page.tsx`
   - Add Singapore-specific case studies
   - Display SGD currency
@@ -303,7 +303,7 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
 
 ## Phase 8: Educational & Comparison Pages
 
-- [ ] 35. Create "What is an AI Agent" page
+- [x] 35. Create "What is an AI Agent" page
   - Create `/what-is-an-ai-agent/page.tsx`
   - Write comprehensive educational content
   - Add diagrams and examples
@@ -311,21 +311,21 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
   - Add conversion CTAs
   - _Requirements: 8.2, 8.5_
 
-- [ ] 36. Create "Agentic AI" page
+- [x] 36. Create "Agentic AI" page
   - Create `/agentic-ai/page.tsx`
   - Explain agentic AI concepts
   - Add use cases and examples
   - Include visual diagrams
   - _Requirements: 8.3, 8.5_
 
-- [ ] 37. Create "Workflow Automation" page
+- [x] 37. Create "Workflow Automation" page
   - Create `/workflow-automation/page.tsx`
   - Explain automation capabilities
   - Add workflow diagrams
   - Include business process examples
   - _Requirements: 8.4, 8.5_
 
-- [ ] 38. Create comparison pages
+- [x] 38. Create comparison pages
   - Create `/ai-agents-vs-rpa/page.tsx`
   - Create `/ai-agents-vs-automation/page.tsx`
   - Implement ComparisonTable component
@@ -400,7 +400,7 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
 
 ## Phase 11: Lead Capture & Conversion
 
-- [ ] 46. Implement lead capture forms
+- [x] 46. Implement lead capture forms
   - Create LeadCaptureForm component
   - Add form validation with Zod
   - Integrate with core-api
@@ -408,20 +408,20 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
   - Add loading indicators
   - _Requirements: 13.1, 13.2_
 
-- [ ] 47. Set up email automation
+- [x] 47. Set up email automation
   - Configure email templates in core-api
   - Set up welcome email sequence
   - Configure sales notification emails
   - Test email delivery
   - _Requirements: 13.3_
 
-- [ ] 48. Implement form abandonment tracking
+- [x] 48. Implement form abandonment tracking
   - Track partial form submissions
   - Save form data for retargeting
   - Implement recovery emails
   - _Requirements: 13.4_
 
-- [ ] 49. Add lead segmentation
+- [x] 49. Add lead segmentation
   - Segment leads by source
   - Segment by industry
   - Segment by intent
@@ -432,7 +432,7 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
 
 ## Phase 12: Analytics & Tracking
 
-- [ ] 50. Set up Google Analytics 4
+- [x] 50. Set up Google Analytics 4
   - Configure GA4 property
   - Implement Analytics component
   - Track page views
@@ -440,14 +440,14 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
   - Set up custom events
   - _Requirements: 14.1, 14.2, 14.3_
 
-- [ ] 51. Set up Microsoft Clarity
+- [x] 51. Set up Microsoft Clarity
   - Configure Clarity project
   - Add Clarity tracking code
   - Set up session recordings
   - Configure heatmaps
   - _Requirements: 14.1, 14.3_
 
-- [ ] 52. Implement conversion tracking
+- [x] 52. Implement conversion tracking
   - Track form submissions
   - Track demo requests
   - Track newsletter signups
@@ -455,14 +455,14 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
   - Attribute conversions to sources
   - _Requirements: 14.2_
 
-- [ ] 53. Create analytics dashboard
+- [x] 53. Create analytics dashboard
   - Build admin dashboard for metrics
   - Display traffic metrics
   - Show conversion funnel
   - Add real-time visitors
   - _Requirements: 14.4_
 
-- [ ] 54. Set up error monitoring
+- [x] 54. Set up error monitoring
   - Configure Sentry for error tracking
   - Set up error boundaries
   - Configure alert notifications
@@ -473,14 +473,14 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
 
 ## Phase 13: Google Cloud Native Integration
 
-- [ ] 55. Set up Google AgentSpace integration
+- [x] 55. Set up Google AgentSpace integration
   - Configure AgentSpace API client
   - Implement agent provisioning flow
   - Add agent status monitoring
   - Test agent deployment
   - _Requirements: 17.7_
 
-- [ ] 56. Implement Google ADK agent templates
+- [x] 56. Implement Google ADK agent templates
   - Create Emma agent template with ADK
   - Create Olivia agent template with ADK
   - Create Jack agent template with ADK
@@ -488,28 +488,28 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
   - Configure Gemini 1.5 Pro for all agents
   - _Requirements: 21.2, 21.5_
 
-- [ ] 57. Set up A2A protocol communication
+- [x] 57. Set up A2A protocol communication
   - Implement A2A client library
   - Configure agent discovery
   - Implement multi-agent coordination
   - Test agent-to-agent messaging
   - _Requirements: 17.7_
 
-- [ ] 58. Configure MCP servers
+- [x] 58. Configure MCP servers
   - Set up Xero MCP server
   - Configure Salesforce MCP server
   - Configure HubSpot MCP server
   - Test MCP server connections
   - _Requirements: 17.7_
 
-- [ ] 59. Set up Workload Identity Federation
+- [x] 59. Set up Workload Identity Federation
   - Configure GKE service accounts
   - Set up IAM bindings
   - Test authentication flow
   - Remove any service account keys
   - _Requirements: 17.6_
 
-- [ ] 60. Integrate Vertex AI services
+- [x] 60. Integrate Vertex AI services
   - Configure Vertex AI embeddings
   - Set up Vector Search
   - Integrate with knowledge base
@@ -520,7 +520,7 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
 
 ## Phase 14: Original Assets & Branding
 
-- [ ] 61. Create agent avatar designs
+- [x] 61. Create agent avatar designs
   - Design Emma avatar (Australian woman, professional)
   - Design Olivia avatar (Australian woman, friendly)
   - Design Jack avatar (Australian man, confident)
@@ -528,28 +528,28 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
   - Export in multiple sizes (WebP, AVIF)
   - _Requirements: 16.1, 16.2, 19.3, 21.3_
 
-- [ ] 62. Create hero background graphics
+- [x] 62. Create hero background graphics
   - Design gradient backgrounds
   - Create SVG ellipse graphics
   - Design animated elements
   - Optimize for performance
   - _Requirements: 16.1, 19.2_
 
-- [ ] 63. Create feature illustrations
+- [x] 63. Create feature illustrations
   - Design custom illustrations for features
   - Create process diagrams
   - Design workflow visualizations
   - Export in optimized formats
   - _Requirements: 16.1, 19.2_
 
-- [ ] 64. Source integration logos
+- [x] 64. Source integration logos
   - Obtain permission for partner logos
   - Download high-quality logos
   - Optimize for web
   - Create fallback placeholders
   - _Requirements: 16.2_
 
-- [ ] 65. Create OG images
+- [x] 65. Create OG images
   - Design Open Graph images for all pages
   - Create Twitter Card images
   - Optimize image sizes
@@ -560,35 +560,35 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
 
 ## Phase 15: Performance Optimization
 
-- [ ] 66. Implement image optimization
+- [x] 66. Implement image optimization
   - Use Next.js Image component everywhere
   - Convert images to WebP/AVIF
   - Implement lazy loading
   - Add blur placeholders
   - _Requirements: 18.3_
 
-- [ ] 67. Optimize bundle size
+- [x] 67. Optimize bundle size
   - Implement code splitting
   - Remove unused dependencies
   - Tree-shake libraries
   - Analyze bundle with webpack-bundle-analyzer
   - _Requirements: 18.2_
 
-- [ ] 68. Implement caching strategy
+- [x] 68. Implement caching strategy
   - Configure CDN caching headers
   - Implement service worker for offline support
   - Cache API responses
   - Implement stale-while-revalidate
   - _Requirements: 18.3_
 
-- [ ] 69. Optimize Core Web Vitals
+- [x] 69. Optimize Core Web Vitals
   - Achieve LCP < 2.5s
   - Achieve FID < 100ms
   - Achieve CLS < 0.1
   - Run Lighthouse CI
   - _Requirements: 18.1, 18.2_
 
-- [ ] 70. Implement performance monitoring
+- [x] 70. Implement performance monitoring
   - Set up Web Vitals tracking
   - Monitor page load times
   - Track API response times
@@ -599,35 +599,35 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
 
 ## Phase 16: Testing
 
-- [ ] 71. Write unit tests for components
+- [x] 71. Write unit tests for components
   - Test layout components
   - Test form components
   - Test utility functions
   - Achieve 80%+ code coverage
   - _Requirements: 18.5_
 
-- [ ] 72. Write integration tests
+- [x] 72. Write integration tests
   - Test form submission flows
   - Test API integration
   - Test navigation flows
   - Test language switching
   - _Requirements: 18.5_
 
-- [ ] 73. Write E2E tests
+- [x] 73. Write E2E tests
   - Test user journey (homepage → product → signup)
   - Test demo request flow
   - Test blog navigation
   - Test mobile responsiveness
   - _Requirements: 18.5_
 
-- [ ] 74. Perform accessibility testing
+- [x] 74. Perform accessibility testing
   - Run axe-core accessibility tests
   - Test keyboard navigation
   - Test screen reader compatibility
   - Achieve WCAG 2.1 AA compliance
   - _Requirements: 18.5_
 
-- [ ] 75. Perform cross-browser testing
+- [x] 75. Perform cross-browser testing
   - Test on Chrome, Firefox, Safari, Edge
   - Test on iOS Safari and Android Chrome
   - Fix browser-specific issues
@@ -637,40 +637,61 @@ This implementation plan breaks down the ANZX Marketing Website Enhancement into
 
 ## Phase 17: Deployment & Launch
 
-- [ ] 76. Set up CI/CD pipeline
-  - Create cloudbuild.yaml
-  - Configure build steps
-  - Set up deployment to Cloud Storage/CDN
-  - Configure cache invalidation
+- [x] 76. Set up CI/CD pipeline
+  - Copy `infrastructure/cloudbuild/pipelines/cricket-chatbot-deploy-fixed.yaml` to `anzx-marketing-deploy.yaml`
+  - Modify for anzx-marketing service (change service directory to `services/anzx-marketing`)
+  - Update Cloudflare project name to `anzx-marketing`
+  - Configure build command: `npm run build` (Next.js 14 static export)
+  - Set output directory to `out/` (Next.js export output)
+  - Reuse existing secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_ZONE_ID
+  - Use same Google Cloud project and region (australia-southeast1) as cricket deployment
+  - Configure deployment steps: Build → Deploy to Cloudflare Pages → Update secrets → Update worker routing
   - _Requirements: 18.4_
 
-- [ ] 77. Configure production environment
-  - Set up production environment variables
-  - Configure production API endpoints
-  - Set up production analytics
-  - Configure production secrets
+- [x] 77. Configure production environment
+  - Create `.env.production` in `services/anzx-marketing/` with production variables
+  - Set NEXT_PUBLIC_CORE_API_URL=https://api.anzx.ai
+  - Set NEXT_PUBLIC_SITE_URL=https://anzx.ai
+  - Configure NEXT_PUBLIC_GA_MEASUREMENT_ID and NEXT_PUBLIC_CLARITY_PROJECT_ID
+  - Create new Google Cloud secret: ANZX_MARKETING_URL (only new secret needed)
+  - Verify existing secrets from cricket deployment are accessible
+  - Update Cloudflare Worker configuration in `infrastructure/cloudflare/worker.js`
+  - Add routing logic: `/cricket/*` → Cricket Chatbot, `/*` → ANZX Marketing
+  - Update `wrangler.toml.tmpl` with ANZX_MARKETING_URL environment variable
   - _Requirements: 18.4_
 
-- [ ] 78. Perform security audit
-  - Review Content Security Policy
-  - Test input validation
-  - Check for XSS vulnerabilities
-  - Review authentication flows
+- [x] 78. Perform security audit
+  - Review and update Content Security Policy headers in `next.config.js`
+  - Ensure CSP directives for Google Analytics, Microsoft Clarity, Cloudflare CDN
+  - Verify all form inputs use Zod validation
+  - Check API route input sanitization
+  - Test for XSS vulnerabilities (check `dangerouslySetInnerHTML` usage)
+  - Validate MDX content rendering security
+  - Configure security headers: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
   - _Requirements: 18.5_
 
-- [ ] 79. Set up monitoring and alerting
-  - Configure uptime monitoring
-  - Set up error rate alerts
-  - Configure performance alerts
-  - Set up log aggregation
+- [x] 79. Set up monitoring and alerting
+  - Configure Google Cloud Monitoring uptime checks for https://anzx.ai/en
+  - Set up alerts for 5xx errors and downtime
+  - Configure Sentry error tracking with alert thresholds
+  - Set up Slack/email notifications for errors
+  - Monitor Core Web Vitals via Google Analytics
+  - Set up performance degradation alerts
+  - Configure Cloud Logging and log-based metrics
+  - Create monitoring dashboard for key metrics
   - _Requirements: 14.5_
 
 - [ ] 80. Deploy to production
-  - Deploy to https://anzx.ai
-  - Verify all pages load correctly
-  - Test all forms and CTAs
-  - Verify analytics tracking
-  - Monitor for errors
+  - Complete pre-deployment checklist: tests passing, environment variables configured, secrets created, DNS verified
+  - Create Cloudflare Pages project named `anzx-marketing`
+  - Trigger Cloud Build deployment: `gcloud builds submit --config=infrastructure/cloudbuild/pipelines/anzx-marketing-deploy.yaml`
+  - Or use helper script: `./scripts/deploy-anzx-marketing.sh`
+  - Verify deployment: homepage (https://anzx.ai/en), Hindi homepage (https://anzx.ai/hi), product pages, blog pages
+  - Verify cricket chatbot still works at https://anzx.ai/cricket
+  - Test analytics tracking, form submissions, mobile responsiveness
+  - Check for console errors and verify all images load
+  - Monitor for 24 hours and optimize as needed
+  - Document rollback plan via Cloudflare dashboard
   - _Requirements: 18.4_
 
 ---
