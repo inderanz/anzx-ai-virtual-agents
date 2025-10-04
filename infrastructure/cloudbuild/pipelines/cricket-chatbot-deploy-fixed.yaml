@@ -107,7 +107,7 @@ steps:
           echo "Captured deployment URL: $$DEPLOYMENT_URL"
           
           # Upload deployment URL to Cloud Storage for next steps
-          echo "$$DEPLOYMENT_URL" | gsutil cp - gs://${_PROJECT_ID}_cloudbuild/deployment-url.txt
+          echo "$$DEPLOYMENT_URL" | gsutil cp - gs://${PROJECT_ID}_cloudbuild/deployment-url.txt
           echo "Uploaded deployment URL to Cloud Storage"
         else
           echo "Error: Could not determine deployment URL"
@@ -132,7 +132,7 @@ steps:
         
         # Download deployment URL from Cloud Storage
         echo "Downloading deployment URL from Cloud Storage..."
-        gsutil cp gs://${_PROJECT_ID}_cloudbuild/deployment-url.txt DEPLOYMENT_URL.txt 2>/dev/null || echo "Failed to download from Cloud Storage"
+        gsutil cp gs://${PROJECT_ID}_cloudbuild/deployment-url.txt DEPLOYMENT_URL.txt 2>/dev/null || echo "Failed to download from Cloud Storage"
         
         # Read the captured deployment URL
         if [ -f DEPLOYMENT_URL.txt ]; then
@@ -166,7 +166,7 @@ steps:
         
         # Download deployment URL from Cloud Storage
         echo "Downloading deployment URL from Cloud Storage..."
-        gsutil cp gs://${_PROJECT_ID}_cloudbuild/deployment-url.txt DEPLOYMENT_URL.txt 2>/dev/null || echo "Failed to download from Cloud Storage"
+        gsutil cp gs://${PROJECT_ID}_cloudbuild/deployment-url.txt DEPLOYMENT_URL.txt 2>/dev/null || echo "Failed to download from Cloud Storage"
         
         # Get secrets for worker deployment
         CF_API_TOKEN=$$(gcloud secrets versions access latest --secret=CLOUDFLARE_API_TOKEN)
@@ -203,7 +203,7 @@ steps:
         
         # Download deployment URL from Cloud Storage
         echo "Downloading deployment URL from Cloud Storage..."
-        gsutil cp gs://${_PROJECT_ID}_cloudbuild/deployment-url.txt DEPLOYMENT_URL.txt 2>/dev/null || echo "Failed to download from Cloud Storage"
+        gsutil cp gs://${PROJECT_ID}_cloudbuild/deployment-url.txt DEPLOYMENT_URL.txt 2>/dev/null || echo "Failed to download from Cloud Storage"
         
         # Set environment variable
         export CLOUDFLARE_API_TOKEN=$$(cat CF_API_TOKEN.txt)
