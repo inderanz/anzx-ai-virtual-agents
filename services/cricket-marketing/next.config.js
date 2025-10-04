@@ -11,13 +11,13 @@ const withMDX = require('@next/mdx')({
 })
 
 const nextConfig = {
-  // Removed 'output: export' - cricket chatbot needs server-side rendering for chat functionality
+  output: 'export', // Required for Cloudflare Pages
   trailingSlash: true,
   pageExtensions: ['js', 'jsx', 'mdx', 'ts', 'tsx'],
   images: {
     domains: ['images.unsplash.com', 'via.placeholder.com'],
     formats: ['image/webp', 'image/avif'],
-    unoptimized: true, // Required for Cloudflare Pages
+    unoptimized: true, // Required for static export
   },
 }
 

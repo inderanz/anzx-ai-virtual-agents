@@ -65,25 +65,22 @@ export default {
       return Response.redirect(`${url.origin}/cricket/chat/`, 301);
     }
     
-    // Serve cricket chatbot at /cricket route and static assets
-    if (pathname === '/cricket' || pathname.startsWith('/cricket/') || pathname.startsWith('/_next/') || pathname.startsWith('/images/')) {
+    // Serve cricket chatbot at /cricket route only
+    if (pathname === '/cricket' || pathname.startsWith('/cricket/')) {
       try {
         // Redirect to Cloudflare Pages deployment
-        const chatbotUrl = env.CRICKET_CHATBOT_URL || 'https://b80389c8.anzx-cricket.pages.dev';
+        const chatbotUrl = env.CRICKET_CHATBOT_URL || 'https://6ded74f7.anzx-cricket.pages.dev';
         let targetPath;
         
         if (pathname === '/cricket') {
           targetPath = '/';
         } else if (pathname.startsWith('/cricket/')) {
           targetPath = pathname.replace('/cricket', '');
-        } else {
-          // For static assets like /_next/ and /images/, use the path as-is
-          targetPath = pathname;
         }
         
         const targetUrl = `${chatbotUrl}${targetPath}${url.search}`;
         
-        console.log('Proxying to:', targetUrl);
+        console.log('Proxying cricket to:', targetUrl);
         
         // Fetch from Cloudflare Pages with proper headers
         const response = await fetch(targetUrl, {

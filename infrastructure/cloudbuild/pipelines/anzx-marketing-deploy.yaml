@@ -107,7 +107,7 @@ steps:
           echo "Captured deployment URL: $$DEPLOYMENT_URL"
           
           # Upload deployment URL to Cloud Storage for next steps
-          echo "$$DEPLOYMENT_URL" | gsutil cp - gs://${_PROJECT_ID}_cloudbuild/deployment-url.txt
+          echo "$$DEPLOYMENT_URL" | gsutil cp - gs://${PROJECT_ID}_cloudbuild/deployment-url.txt
           echo "Uploaded deployment URL to Cloud Storage"
         else
           echo "Error: Could not determine deployment URL"
