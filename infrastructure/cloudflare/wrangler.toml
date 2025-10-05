@@ -1,8 +1,8 @@
 # Cloudflare Worker Configuration Template
 # This file is templated during Cloud Build - do not hardcode secrets
 
-name = "anzx-cricket-proxy"
-main = "worker.js"
+name = "anzx-complete-proxy"
+main = "worker-fixed.js"
 compatibility_date = "2025-09-28"
 
 # Account and zone configuration
@@ -10,6 +10,7 @@ account_id = "e5e04460dc614be69eb5b8252bff5588"
 
 # Route configuration
 # Only handle cricket routes and API endpoints
+# Let Cloudflare Pages handle the root domain directly
 routes = [
   { pattern = "anzx.ai/cricket*", zone_id = "aa2c1700d4063f17d4235701fdf5c4fd" },
   { pattern = "anzx.ai/api/cricket*", zone_id = "aa2c1700d4063f17d4235701fdf5c4fd" }
@@ -19,6 +20,7 @@ routes = [
 [vars]
 CRICKET_AGENT_URL = "https://cricket-agent-aa5gcxefza-ts.a.run.app"
 CRICKET_CHATBOT_URL = "https://d1e8b1c8.anzx-cricket.pages.dev"
+MARKETING_SITE_URL = "https://fadf9881.anzx-marketing.pages.dev"
 
 # Worker configuration
 [build]

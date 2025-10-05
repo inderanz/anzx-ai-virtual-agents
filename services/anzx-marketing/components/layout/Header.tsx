@@ -32,8 +32,19 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="text-2xl font-bold gradient-text">ANZX.ai</div>
+          <Link 
+            href="/" 
+            className="flex items-center"
+            onClick={() => {
+              // Scroll to top when clicking logo
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            <img 
+              src="/images/anzx-logo.png" 
+              alt="ANZX.ai" 
+              className="h-12 w-12 rounded-full object-cover border-2 border-white shadow-md hover:scale-105 transition-transform"
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -46,13 +57,13 @@ export function Header() {
             <ClientOnlyLanguageSwitcher />
             <Link
               href="/login"
-              className="text-gray-700 hover:text-anzx-blue transition-colors"
+              className="text-white font-bold hover:text-blue-200 transition-colors"
             >
               {t('login')}
             </Link>
             <Link
               href="/get-started"
-              className="bg-anzx-blue text-white px-4 py-2 rounded-lg hover:bg-anzx-blue-dark transition-colors"
+              className="bg-white text-blue-600 px-6 py-2.5 rounded-lg font-bold hover:bg-blue-50 hover:shadow-lg transition-all"
             >
               {t('getStarted')}
             </Link>

@@ -27,11 +27,11 @@ export function Button({
 
   const variants = {
     primary:
-      'bg-gradient-to-r from-anzx-blue to-anzx-blue-dark text-white hover:shadow-lg focus:ring-anzx-blue',
+      'bg-gradient-to-r from-teal-500 to-teal-400 text-white font-bold shadow-2xl hover:shadow-[0_20px_40px_rgba(20,184,166,0.5)] focus:ring-teal-400',
     secondary:
-      'bg-gradient-to-r from-anzx-orange to-anzx-orange-dark text-white hover:shadow-lg focus:ring-anzx-orange',
+      'bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white font-bold hover:bg-white/30 hover:shadow-xl focus:ring-white',
     outline:
-      'border-2 border-anzx-blue text-anzx-blue hover:bg-anzx-blue hover:text-white focus:ring-anzx-blue',
+      'border-2 border-teal-400 text-white hover:bg-teal-400 hover:text-white focus:ring-teal-400',
   };
 
   const sizes = {

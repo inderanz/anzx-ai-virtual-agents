@@ -97,13 +97,34 @@ export function AnimatedHeadline({
             duration: shouldAnimate ? 0.4 : 0,
             ease: 'easeInOut',
           }}
-          className="inline-block"
+          className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 via-pink-400 via-orange-400 to-cyan-400 animate-gradient-flow font-extrabold"
+          style={{
+            backgroundSize: '300% 300%',
+          }}
           aria-live="polite"
           aria-label={`${currentPhrase}`}
         >
           {currentPhrase}
         </motion.span>
       </AnimatePresence>
+      
+      <style jsx>{`
+        @keyframes gradient-flow {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+        
+        .animate-gradient-flow {
+          animation: gradient-flow 8s ease infinite;
+        }
+      `}</style>
     </div>
   );
 }

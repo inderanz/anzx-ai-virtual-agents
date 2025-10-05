@@ -31,11 +31,11 @@ interface LeadCaptureFormProps {
   className?: string;
 }
 
-export function LeadCaptureForm({ 
-  source = 'website', 
+export function LeadCaptureForm({
+  source = 'website',
   campaign = 'general',
   onSuccess,
-  className = '' 
+  className = ''
 }: LeadCaptureFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -101,7 +101,7 @@ export function LeadCaptureForm({
       setSubmitStatus('success');
       markCompleted(); // Mark form as completed for tracking
       reset();
-      
+
       // Track conversion event
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'generate_lead', {
@@ -334,7 +334,7 @@ export function LeadCaptureForm({
           className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
         />
         <label htmlFor="consent" className="text-sm text-gray-700">
-          I agree to receive communications from ANZX.ai and understand that I can unsubscribe at any time. 
+          I agree to receive communications from ANZX.ai and understand that I can unsubscribe at any time.
           View our <a href="/legal/privacy-policy" className="text-blue-600 hover:underline">Privacy Policy</a>.
         </label>
       </div>

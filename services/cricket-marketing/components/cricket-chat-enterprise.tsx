@@ -132,18 +132,20 @@ export function CricketChatEnterprise() {
             >
               <motion.div className="stat-item" {...animationPresets.card}>
               <div className="stat-number">
-                <AnimatedCounter end={24} duration={2} />
+                <AnimatedCounter end={6} duration={2} />
               </div>
               <div className="stat-label">Canonical Queries</div>
             </motion.div>
             <motion.div className="stat-item" {...animationPresets.card}>
               <div className="stat-number">
-                <AnimatedCounter end={8} duration={2.5} />
+                <AnimatedCounter end={2} duration={2.5} />
               </div>
               <div className="stat-label">Teams</div>
               </motion.div>
               <motion.div className="stat-item" {...animationPresets.card}>
-                <div className="stat-number">24/7</div>
+                <div className="stat-number">
+                  <AnimatedCounter end={24} duration={2} />/<AnimatedCounter end={7} duration={2.2} />
+                </div>
                 <div className="stat-label">Available</div>
               </motion.div>
             </motion.div>

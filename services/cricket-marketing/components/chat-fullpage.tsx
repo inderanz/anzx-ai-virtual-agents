@@ -106,7 +106,8 @@ What would you like to know?`,
     setMessages(prev => [...prev, streamingMessage])
 
     try {
-      const response = await fetch('https://cricket-agent-aa5gcxefza-ts.a.run.app/v1/ask', {
+      const apiUrl = process.env.NEXT_PUBLIC_CRICKET_AGENT_URL || 'https://cricket-agent-aa5gcxefza-ts.a.run.app'
+      const response = await fetch(`${apiUrl}/v1/ask`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

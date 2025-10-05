@@ -1,0 +1,24 @@
+# Cloudflare Worker Configuration - Complete Proxy
+# This worker handles ALL traffic for anzx.ai and routes appropriately
+
+name = "anzx-complete-proxy"
+main = "worker-fixed.js"
+compatibility_date = "2025-09-28"
+
+# Account and zone configuration
+account_id = "e5e04460dc614be69eb5b8252bff5588"
+
+# Route configuration - Handle ALL traffic on anzx.ai
+routes = [
+  { pattern = "anzx.ai/*", zone_id = "aa2c1700d4063f17d4235701fdf5c4fd" }
+]
+
+# Environment variables
+[vars]
+CRICKET_AGENT_URL = "https://cricket-agent-aa5gcxefza-ts.a.run.app"
+CRICKET_CHATBOT_URL = "https://d1e8b1c8.anzx-cricket.pages.dev"
+MARKETING_SITE_URL = "https://e7218b3a.anzx-marketing.pages.dev"
+
+# Worker configuration
+[build]
+command = ""

@@ -3,6 +3,19 @@ import { z } from 'zod';
 import { sendDemoConfirmation, sendSalesNotification } from '@/lib/email/emailService';
 import { leadSegmentation } from '@/lib/leads/segmentation';
 
+// Simple schema for quick demo requests from agent cards
+const simpleDemoRequestSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  company: z.string().min(2),
+  phone: z.string().optional(),
+  message: z.string().optional(),
+  agentName: z.string().optional(),
+  agentRole: z.string().optional(),
+  timestamp: z.string(),
+});
+
+// Full schema for detailed demo requests
 const demoRequestSchema = z.object({
   firstName: z.string().min(2),
   lastName: z.string().min(2),
@@ -29,8 +42,57 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Validate the request body
-    const validatedData = demoRequestSchema.parse(body);
+    // Try simple schema first (from agent cards)
+    let validatedData;
+    let isSimpleRequest = false;
+    
+    try {
+      validatedData = simpleDemoRequestSchema.parse(body);
+      isSimpleRequest = true;
+    } catch {
+      // Fall back to full schema
+      validatedData = demoRequestSchema.parse(body);
+    }
+
+    // Handle simple demo requests
+    if (isSimpleRequest) {
+      // Send email notification to inderanz@gmail.com
+      const emailContent = `
+New Demo Request from Agent Card
+
+Agent: ${validatedData.agentName || 'N/A'} - ${validatedData.agentRole || 'N/A'}
+Name: ${validatedData.name}
+Email: ${validatedData.email}
+Company: ${validatedData.company}
+Phone: ${validatedData.phone || 'Not provided'}
+Message: ${validatedData.message || 'No message'}
+
+Timestamp: ${validatedData.timestamp}
+      `.trim();
+
+      // Send email (using a simple fetch to a serverless function or email service)
+      try {
+        // For now, log it and return success
+        // In production, integrate with SendGrid, AWS SES, or similar
+        console.log('Demo Request Email:', emailContent);
+        console.log('Send to: inderanz@gmail.com');
+        
+        // TODO: Integrate with actual email service
+        // await sendEmail({
+        //   to: 'inderanz@gmail.com',
+        //   subject: `New Demo Request - ${validatedData.agentName}`,
+        //   text: emailContent,
+        // });
+      } catch (emailError) {
+        console.error('Email send error:', emailError);
+        // Don't fail the request if email fails
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Demo request submitted successfully',
+      });
+    }
 
     // Get client IP for tracking
     const clientIP = request.headers.get('x-forwarded-for') || 
